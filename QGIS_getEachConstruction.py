@@ -37,7 +37,8 @@ def getEachConstruction(constructionMapPath, parcelsFolder):
         for feature in selected.getFeatures():
             identifier = feature.attributes()[feature.fieldNameIndex('fid')]
             # print('\t' + str(identifier))
-            fileFolder = parcelsFolder + parcel + "/" + str(identifier)
+            create_output_folder(parcelsFolder + parcel + "/" + str(identifier), deleteFolder=True)
+            fileFolder = parcelsFolder + parcel + "/" + str(identifier) + "/Map files/"
             create_output_folder(fileFolder, deleteFolder=True)
 
             selected.setSubsetString(f"fid='{identifier}'")

@@ -29,7 +29,7 @@ def download_LIDAR_CAT(squares, outputFolder):
                 file.write(chunk)
 
 if __name__ == "__main__":
-    squares = [433586, 434586, 435586, 433585, 434585, 435585, 433584, 434584, 435584, 433583, 434583, 435583]
+    squares = [433586, 434586, 435586, 433585, 434585, 435585, 433584, 434584, 435584]
     basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
     outputFolder = "RAW_Data/LiDAR/"
     download_LIDAR_CAT(squares, basePath + outputFolder)

@@ -20,7 +20,7 @@ def getEachParcel(mapPath, buildingsFolder):
     for feature in neighborhood_layer.getFeatures():
         identifier = feature.attributes()[feature.fieldNameIndex('REFCAT')]
         fileFolder = buildingsFolder + "/" + str(identifier)
-        create_output_folder(fileFolder) #, deleteFolder = True
+        create_output_folder(fileFolder, deleteFolder = True)
 
         neighborhood_layer.setSubsetString(f"REFCAT='{identifier}'")
         found_polygon_Layer = neighborhood_layer.materialize(QgsFeatureRequest())
