@@ -55,7 +55,7 @@ pointsDF_list <- data.frame()
 
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- parcels
+  parcels <- parcels[1]
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
     for (construction in constructions){

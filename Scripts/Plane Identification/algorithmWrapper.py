@@ -196,7 +196,6 @@ def ransacSimple(lasDF, stoppingPercentage = 0.2):
         planes.append(currentHeightPlanes)
         pointsPlanes.append(currentHeightPoints)
    
-    print(planes)
     return planes, pointsPlanes
 
 #### Working code
@@ -277,22 +276,22 @@ if __name__ == "__main__":
     elapsedTimesList = []
     accuraciesList = []
 
-    for parcel in os.listdir(parcelsFolder)[0:1]:
+    for parcel in tqdm.tqdm(os.listdir(parcelsFolder)):
         parcelPath = parcelsFolder + parcel
-        for construction in [x for x in os.listdir(parcelPath) if os.path.isdir(parcelPath + "/" + x)][0:1]:
+        for construction in [x for x in os.listdir(parcelPath) if os.path.isdir(parcelPath + "/" + x)]:
             constructionFolder = parcelPath + "/" + construction + "/"
-            # try:
-            pointCount, planesCount, unidentifiedCount, timeDiff, score = detect_planes(constructionFolder)
-            
-            parcelsList.append(parcel)
-            constructionsList.append(construction)
-            totalPointsList.append(pointCount)
-            totalPlanesList.append(planesCount)
-            unidentifiedPointsList.append(unidentifiedCount)
-            elapsedTimesList.append(timeDiff)
-            accuraciesList.append(score)
-            # except Exception as e:
-            #     print(parcel, construction, e)
+            try:
+                pointCount, planesCount, unidentifiedCount, timeDiff, score = detect_planes(constructionFolder)
+                
+                parcelsList.append(parcel)
+                constructionsList.append(construction)
+                totalPointsList.append(pointCount)
+                totalPlanesList.append(planesCount)
+                unidentifiedPointsList.append(unidentifiedCount)
+                elapsedTimesList.append(timeDiff)
+                accuraciesList.append(score)
+            except Exception as e:
+                print(parcel, construction, e)
     
     summaryDF = pd.DataFrame({
         'parcel': parcelsList,
