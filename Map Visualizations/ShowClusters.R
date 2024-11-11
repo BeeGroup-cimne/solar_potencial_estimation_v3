@@ -55,7 +55,7 @@ pointsDF_list <- data.frame()
 
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- parcels[1]
+  parcels <- parcels[2]
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
     for (construction in constructions){
@@ -88,7 +88,7 @@ map2 <-leaflet(data_sf, options = leafletOptions(maxZoom = 20)) %>%
     stroke = FALSE, fillOpacity = 0.7
   )%>%
   addScaleBar()
-
+map2
 ###############################################################################################
 
 
