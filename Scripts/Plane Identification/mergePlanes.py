@@ -76,22 +76,16 @@ def merge_planes(constructionFolder):
     start = time.time()
 
     inputFolder = constructionFolder + "/Plane Identification/"
-    outputFolder = constructionFolder + "/Plane Processing/"
+    outputFolder = constructionFolder + "/Plane Processing/Plane Merging/"
     create_output_folder(outputFolder + "/Plane Lists/", deleteFolder=True)
     create_output_folder(outputFolder + "/Plane Points/", deleteFolder=True)
 
-    fullPlaneLists = []
-    fullPlanePoints = []
-
-    ##############
-    # To modify, change this so taht it merges only within that cadaster
-    
-
     for planeListFile in os.listdir(inputFolder + "/Plane Lists/"):
-        cadasterGroup = planeListFile.replace(".csv", "")
+        heightGroup = planeListFile.replace(".csv", "")
         planeLists = []
         planePoints = []
-        for file in  [file for file in os.listdir(inputFolder + "/Plane Points/") if file.startswith(cadasterGroup)]:
+
+        for file in  [file for file in os.listdir(inputFolder + "/Plane Points/") if file.startswith(heightGroup)]:
             df = pd.read_csv(inputFolder + "/Plane Points/" + file, header=None)
             df = df.rename(columns={0:'x', 1:'y', 2:'z'})
             planePoints.append(df)
@@ -121,17 +115,12 @@ def merge_planes(constructionFolder):
         # #########################
 
         for i in range(len(planeLists)):
-            # #appending in list1
-            # fullPlaneLists.append(planeLists[i])
-            # fullPlanePoints.append(planePoints[i])
-    
-            # save final plane lists and planePoints
-            with open(outputFolder + "/Plane Lists/" + cadasterGroup + ".csv", "w", newline='') as f:
+            with open(outputFolder + "/Plane Lists/" + heightGroup + ".csv", "w", newline='') as f:
                 writer = csv.writer(f)
                 writer.writerows(planeLists)
 
             for i in range(len(planePoints)):
-                filename = outputFolder + "/Plane Points/" + cadasterGroup + "_" + str(i) + ".csv" #str(i).zfill(2)
+                filename = outputFolder + "/Plane Points/" + heightGroup + "_" + str(i) + ".csv" #str(i).zfill(2)
                 planePoints[i][["x", "y", "z"]].to_csv(filename, header=None, index=False)
 
     finish = time.time()
@@ -149,7 +138,7 @@ if __name__ == "__main__":
     parcelsList = []
     constructionsList = []
     elapsedTimesList = []
-    for parcel in tqdm(os.listdir(parcelsFolder)):
+    for parcel in tqdm(os.listdir(parcelsFolder)[0:1]):
         parcelPath = parcelsFolder + parcel
         for construction in [x for x in os.listdir(parcelPath) if os.path.isdir(parcelPath + "/" + x)]:
             constructionFolder = parcelPath + "/" + construction + "/"

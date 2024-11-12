@@ -52,16 +52,16 @@ map1 <-leaflet(merged_sf, options = leafletOptions(maxZoom = 20)) %>%
 
 # Create the second map
 pointsDF_list <- data.frame()
-
+searchPath <- "/Plane Processing/Plane Merging/Plane Points/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- parcels[2]
+  parcels <- c("4355801DF3845E")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
     for (construction in constructions){
-      clusters <- list.files(path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, "/Plane Identification/Plane Points/"), recursive = FALSE, full.names = FALSE)
+      clusters <- list.files(path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), recursive = FALSE, full.names = FALSE)
       for (cluster in clusters){
-        df <- read.csv(paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, "/Plane Identification/Plane Points/", cluster),
+        df <- read.csv(paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath, cluster),
                        header = FALSE)
         colnames(df) <- c("x", "y", "z")
         df <- df %>% mutate(construction = construction)
@@ -79,15 +79,23 @@ data_sf <- st_transform(data_sf, crs = 4326)
 unique_clusters <- unique(data_sf$cluster)
 palette <- colorFactor(palette = "Set1", domain = unique_clusters)
 
-map2 <-leaflet(data_sf, options = leafletOptions(maxZoom = 20)) %>%
+map2 <-leaflet(data_sf, options = leafletOptions(maxZoom = 25)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addCircleMarkers(# Use x and y columns for coordinates
     color = ~palette(cluster),   # Color points by cluster
     label = ~cluster,            # Optional: label each point with its cluster tag
     radius = 5,                  # Adjust point size if needed
-    stroke = FALSE, fillOpacity = 0.7
+    stroke = FALSE, fillOpacity = 1
   )%>%
-  addScaleBar()
+  addScaleBar() %>%
+  addLegend(
+    "bottomright",                # Position of the legend
+    pal = palette,                # Color palette
+    values = ~cluster,            # Values used for the legend (clusters)
+    title = "Cluster",            # Title for the legend
+    opacity = 1                   # Legend opacity
+  )
+
 map2
 ###############################################################################################
 
