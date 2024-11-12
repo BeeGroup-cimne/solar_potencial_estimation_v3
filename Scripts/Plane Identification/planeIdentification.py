@@ -1,6 +1,6 @@
 import os
 import shutil
-import tqdm
+from tqdm import tqdm
 import pandas as pd
 import laspy
 import numpy as np
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     elapsedTimesList = []
     accuraciesList = []
 
-    for parcel in tqdm.tqdm(os.listdir(parcelsFolder)):
+    for parcel in tqdm(os.listdir(parcelsFolder)):
         parcelPath = parcelsFolder + parcel
         for construction in [x for x in os.listdir(parcelPath) if os.path.isdir(parcelPath + "/" + x)]:
             constructionFolder = parcelPath + "/" + construction + "/"
