@@ -13,10 +13,10 @@ neighborhoods <- c("70_el Besòs i el Maresme")
 cadaster_sf_list <- list()
 planes_sf_list <- list()
 
-searchPath <- "/Plane Processing/Cadaster Fitting/Geopackages/"
+searchPath <- "/Plane Processing/No Overlaps/Geopackages/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- parcels
+  parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
     gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", constructions, "/Map files/", constructions, ".gpkg")
@@ -52,12 +52,12 @@ for (neighborhood in neighborhoods){
 cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 
-palette <- colorFactor(palette = "Set3", domain = unique(polygons$plane[!grepl("Intersection", polygons$plane)]))
+palette <- colorFactor(palette = "Set3", domain = unique(planes_merged_sf$plane))
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
-  addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
+  #addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addPolygons(
-    fillColor = ~ ifelse(grepl("Intersection", plane), "white", palette(plane)),
+    fillColor = ~ palette(plane),
     opacity = 1,
     stroke = TRUE,
     color = "black",
@@ -65,8 +65,10 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
     weight = 1                 # Set outline thickness
   ) %>%
   addPolygons(data = cadaster_merged_sf,
-              weight = 2,
+              weight = 4,
               color =  "black",
+              fillColor = "white",
+              fillOpacity = 0,
               opacity = 1,
               label = ~paste(REFCAT, construction, CONSTRU, sep=". ")) %>%
   addScaleBar()

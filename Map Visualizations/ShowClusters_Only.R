@@ -12,13 +12,13 @@ neighborhoods <- c("70_el Besòs i el Maresme")
 re_sf_list <- list()
 pointsDF_list <- data.frame()
 
-searchPath <- "/Plane Processing/Plane Deleting/Plane Points/"
+searchPath <- "/Plane Processing/No Overlaps/Plane Points/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- c("4251517DF3845A", "4355801DF3845E", "4949408DF3844H", "4355201DF3845E", "4452208DF3845A")
-  parcels <- parcels[1]
+  parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
+    # constructions <- constructions[4]
     gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", constructions, "/Map files/", constructions, ".gpkg")
     
     partial_re_sf_list <- lapply(gpkg_files, function(file) {
