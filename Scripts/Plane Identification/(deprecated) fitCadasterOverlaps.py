@@ -88,9 +88,9 @@ def fit_cadaster(constructionFolder):
 
     inputFolder = constructionFolder + "/Plane Processing/Plane Deleting/"
     outputFolder = constructionFolder + "/Plane Processing/Cadaster Fitting/"
-    create_output_folder(outputFolder + "/Plane Lists/", deleteFolder=True)
-    create_output_folder(outputFolder + "/Plane Points/", deleteFolder=True)
-    create_output_folder(outputFolder + "/Geopackages/", deleteFolder=True)
+    # create_output_folder(outputFolder + "/Plane Lists/", deleteFolder=True)
+    # create_output_folder(outputFolder + "/Plane Points/", deleteFolder=True)
+    # create_output_folder(outputFolder + "/Geopackages/", deleteFolder=True)
 
     gpkg_file = [f for f in os.listdir(constructionFolder + "/Map files/" ) if f.endswith(".gpkg")][0]
     cadasterGDF = gpd.read_file(constructionFolder + "/Map files/" + gpkg_file)
@@ -123,12 +123,12 @@ def fit_cadaster(constructionFolder):
         # Convert to a GeoDataFrame
         lines_gdf = gpd.GeoDataFrame(geometry=clipped_linestrings, crs=cadasterGDF.crs)
 
-        # # Plotting the GeoDataFrame and intersection lines
-        # fig, ax = plt.subplots(figsize=(10, 10))
-        # cadasterGDF.plot(ax=ax, color='lightgrey', edgecolor='black')
-        # lines_gdf.plot(ax=ax, color='red', linewidth=2)
+        # Plotting the GeoDataFrame and intersection lines
+        fig, ax = plt.subplots(figsize=(10, 10))
+        cadasterGDF.plot(ax=ax, color='lightgrey', edgecolor='black')
+        lines_gdf.plot(ax=ax, color='red', linewidth=2)
 
-        # plt.show()
+        plt.show()
         
         # # Come on, do something
         # gdfList = []

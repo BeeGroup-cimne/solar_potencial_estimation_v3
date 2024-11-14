@@ -165,7 +165,8 @@ if __name__ == "__main__":
     parcelsList = []
     constructionsList = []
     elapsedTimesList = []
-    for parcel in tqdm(os.listdir(parcelsFolder)[0:1]):
+    # for parcel in tqdm(os.listdir(parcelsFolder)[0:1]):
+    for parcel in ["4054901DF3845C"]:
         parcelPath = parcelsFolder + parcel
         for construction in [x for x in os.listdir(parcelPath) if os.path.isdir(parcelPath + "/" + x)]:
             constructionFolder = parcelPath + "/" + construction + "/"

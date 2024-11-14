@@ -8,15 +8,14 @@ library(sf)
 library(leaflet.extras)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
-neighborhoods <- c("70_el Besòs i el Maresme")
+neighborhoods <- c("Test_70_el Besòs i el Maresme")
 
 cadaster_sf_list <- list()
 planes_sf_list <- list()
 
-searchPath <- "/Plane Processing/No Overlaps/Geopackages/"
+searchPath <- "/Plane Processing/Cadaster Fitting/Geopackages/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
     gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", constructions, "/Map files/", constructions, ".gpkg")

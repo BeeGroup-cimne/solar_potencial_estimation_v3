@@ -7,18 +7,17 @@ library(RColorBrewer)
 library(sf)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
-neighborhoods <- c("70_el Besòs i el Maresme")
+neighborhoods <- c("Test_70_el Besòs i el Maresme")
 
 re_sf_list <- list()
 pointsDF_list <- data.frame()
 
 searchPath <- "/Plane Processing/No Overlaps/Plane Points/"
+searchPath <- "/Plane Identification/Plane Points/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
-  parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
-    # constructions <- constructions[4]
     gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", constructions, "/Map files/", constructions, ".gpkg")
     
     partial_re_sf_list <- lapply(gpkg_files, function(file) {
