@@ -59,11 +59,7 @@ def detect_planes(buildingsFolder):
     xyz = lazFile.xyz
 
     lasDF = pd.DataFrame(xyz, columns=['x', 'y', 'z'])
-    lasDF['r'] = lazFile.red/65535.0
-    lasDF['b'] = lazFile.blue/65535.0
-    lasDF['g'] = lazFile.green/65535.0
-    lasDF['intensity'] = lazFile.intensity/65535.0
-
+    lasDF['r'] = lazFile.red/65535.0# Step 1: Create a template for custom clustering algorithms
     # Apply the algorithm
     planes, pointsPlanes = ransacHeightSplit(lasDF)
 
