@@ -33,6 +33,7 @@ for (neighborhood in neighborhoods){
     for (construction in constructions){
       planes <- list.files(path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), recursive = FALSE, full.names = FALSE)
       planes <- planes[!file.info(file.path(paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), planes))$isdir]
+      planes <- planes[grepl("\\.gpkg$", planes)]
       if(length(planes) > 0){
         gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath, planes)
         partial_planes_sf_list <- lapply(gpkg_files, function(file) {
@@ -52,25 +53,27 @@ for (neighborhood in neighborhoods){
 cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 
-palette <- colorFactor(palette = "Set3", domain = unique(planes_merged_sf$plane))
+palette <- colorFactor(palette = "Set3", domain = unique(planes_merged_sf$cluster))
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
-  #addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addPolygons(
-    fillColor = ~ palette(plane),
+    fillColor = ~ palette(cluster),
     opacity = 1,
     stroke = TRUE,
     color = "black",
-    fillOpacity = 0.5,           # Adjust the fill opacity for better visibility
+    fillOpacity = 1,           # Adjust the fill opacity for better visibility
     weight = 1                 # Set outline thickness
   ) %>%
+  
   addPolygons(data = cadaster_merged_sf,
               weight = 4,
               color =  "black",
               fillColor = "white",
               fillOpacity = 0,
               opacity = 1,
-              label = ~paste(REFCAT, construction, CONSTRU, sep=". ")) %>%
+              label = ~paste(REFCAT, construction, CONSTRU, sep=". ")
+  )%>%
   addScaleBar()
 
 map2

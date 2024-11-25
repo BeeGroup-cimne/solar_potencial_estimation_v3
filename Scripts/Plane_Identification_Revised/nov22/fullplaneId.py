@@ -10,7 +10,7 @@ import numpy as np
 from planeIdentification import *
 from getVoronoiClipped import getVoronoiClipped
 from planeProcessing import *
-
+from sklearn.cluster import DBSCAN
 
 def create_output_folder(directory, deleteFolder = False):
     if not(os.path.isdir(directory)):
@@ -24,8 +24,8 @@ basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_esti
 neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
-    # print(parcel)
+for parcel in tqdm(os.listdir(parcelsFolder)[0:1], desc="Looping through parcels"):
+    print(parcel)
     parcelSubfolder = parcelsFolder + parcel + "/"
     for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
         constructionFolder = parcelSubfolder + construction
@@ -39,33 +39,42 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
 
         pipeline = ClusterPipeline([
             heightSplit(distance_threshold = 0.45),  # First clustering stage
-            PlanesCluster(inlierThreshold=0.15, num_iterations=10, maxPlanes=20, iterationsToConverge=10)
-            # DBSCAN(eps=1.5, min_samples=8),
+            PlanesCluster(inlierThreshold=0.15, num_iterations=10, maxPlanes=20, iterationsToConverge=10),
+            DBSCAN(eps=1.5, min_samples=8),
         ])
 
         pipeline.fit(lasDF.xyz)
         pipeline.getAllPlanes(lasDF.xyz)
 
+        labels = pipeline.final_labels
+
+        lasDF.add_extra_dim(laspy.ExtraBytesParams(
+            name="Labels",
+            type=np.int64))
+        lasDF["Labels"] = labels
+        
+        lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
         # PlaneProcessing
-        labels, planeLists = merge_planes(lasDF.xyz, pipeline.final_labels, pipeline.planes)
+        labels, planeLists = merge_planes(lasDF.xyz, labels, pipeline.planes)
        
         vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
+        vorClipped = vorClipped[vorClipped.cluster != -1]
 
         #Ax+By+Z=D, but D in planeLists is negative, so we need to multiply by -1
-        A_list = [0] # This 0 is a place holder for the -1 cluster
-        B_list = [0]
-        D_list = [0]
+        A_list = []
+        B_list = []
+        D_list = []
 
-        for idx, planeParams in enumerate(planeLists):
-            A_list.append(planeParams[0])
-            B_list.append(planeParams[1])
-            D_list.append(-planeParams[3])
+        # for idx, planeParams in enumerate(planeLists):
+        #     A_list.append(planeParams[0])
+        #     B_list.append(planeParams[1])
+        #     D_list.append(-planeParams[3])
         
-        vorClipped["A"] = A_list
-        vorClipped["B"] = B_list
-        vorClipped["D"] = D_list
+        # vorClipped["A"] = A_list
+        # vorClipped["B"] = B_list                                                                                                                                                                                
+        # vorClipped["D"] = D_list
 
-        vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 5))
+        vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 2))
         vorClipped = vorClipped[vorClipped.geometry != None] 
-       
+
         vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")
