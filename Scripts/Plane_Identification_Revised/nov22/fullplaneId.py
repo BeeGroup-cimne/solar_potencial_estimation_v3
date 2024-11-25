@@ -1,49 +1,71 @@
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import laspy
+import os
+import shutil
+import time
+from tqdm import tqdm
+import numpy as np
+
+from planeIdentification import *
+from getVoronoiClipped import getVoronoiClipped
+from planeProcessing import *
+
+
+def create_output_folder(directory, deleteFolder = False):
+    if not(os.path.isdir(directory)):
+        os.makedirs(directory)
+    else:
+        if(deleteFolder):
+            shutil.rmtree(directory)
+            os.makedirs(directory)
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-parcel = "4151302DF3845A" # "4157903DF3845E" # 
-construction = 139 # 86 # 
-parcel = "4157903DF3845E" # 
-construction = 86 # 
-# parcel = "4054901DF3845C" # 
-# construction = 490 # 
-construction = str(construction)
+for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    # print(parcel)
+    parcelSubfolder = parcelsFolder + parcel + "/"
+    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+        constructionFolder = parcelSubfolder + construction
+        create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
+        create_output_folder(constructionFolder + "/Plane Identification/Plane Points")
 
-lasPath = parcelsFolder + parcel + "/" + construction + "/Map files/" + construction + ".laz"
-lasDF = laspy.read(lasPath)
+        lasPath = constructionFolder + "/Map files/" + construction + ".laz"
+        lasDF = laspy.read(lasPath)
+        gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
+        cadasterGDF = gpd.read_file(gpkgFile)
 
-gpkgFile = parcelsFolder + parcel + "/" + construction + "/Map files/" + construction + ".gpkg"
-cadasterGDF = gpd.read_file(gpkgFile)
+        pipeline = ClusterPipeline([
+            heightSplit(distance_threshold = 0.45),  # First clustering stage
+            PlanesCluster(inlierThreshold=0.15, num_iterations=10, maxPlanes=20, iterationsToConverge=10)
+            # DBSCAN(eps=1.5, min_samples=8),
+        ])
 
-# cadasterGDF.plot(ax = plt.gca(), color='none', edgecolor='black')
-# plt.scatter(lasDF.x, lasDF.y, c=lasDF.z)
-# plt.gca().set_aspect('equal')
-# plt.show()
+        pipeline.fit(lasDF.xyz)
+        pipeline.getAllPlanes(lasDF.xyz)
 
-from planeIdentification import *
-from getVoronoiClipped import getVoronoiClipped
+        # PlaneProcessing
+        labels, planeLists = merge_planes(lasDF.xyz, pipeline.final_labels, pipeline.planes)
+       
+        vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
 
-pipeline = ClusterPipeline([
-    heightSplit(distance_threshold = 0.45),  # First clustering stage
-    PlanesCluster(inlierThreshold=0.15, num_iterations=10, maxPlanes=20, iterationsToConverge=10)
-    # DBSCAN(eps=1.5, min_samples=8),
-])
+        #Ax+By+Z=D, but D in planeLists is negative, so we need to multiply by -1
+        A_list = [0] # This 0 is a place holder for the -1 cluster
+        B_list = [0]
+        D_list = [0]
 
-# Fit the pipeline
-pipeline.fit(lasDF.xyz)
-vorClipped = getVoronoiClipped(lasDF.xyz, pipeline.final_labels, cadasterGDF)
+        for idx, planeParams in enumerate(planeLists):
+            A_list.append(planeParams[0])
+            B_list.append(planeParams[1])
+            D_list.append(-planeParams[3])
+        
+        vorClipped["A"] = A_list
+        vorClipped["B"] = B_list
+        vorClipped["D"] = D_list
 
-# plot_clusters(lasDF.xyz, pipeline.final_labels, title="Final Stage Clustering")
-
-vorClipped = vorClipped[vorClipped.cluster != -1]
-vorClipped['cluster'] = [i for i in range(len(vorClipped))]
-
-vorClipped.plot(ax = plt.gca(), column = 'cluster', edgecolor='black')
-plt.legend(vorClipped['cluster'])
-plt.title(f"{len(vorClipped):.0f} clusters found")
-plt.show()
+        vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 5))
+        vorClipped = vorClipped[vorClipped.geometry != None] 
+       
+        vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")

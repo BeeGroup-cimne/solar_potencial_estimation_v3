@@ -45,6 +45,14 @@ class ClusterPipeline:
             
         self.final_labels = self.stage_labels[-1]
         return self
+    
+    def getAllPlanes(self, X):
+        planes = []
+        for cluster in np.unique(self.final_labels):
+            if cluster != -1:
+                planes.append(LinearRegression().fit(X[np.where(self.final_labels == cluster)[0], 0:2], X[np.where(self.final_labels == cluster)[0],2]))
+        self.planes = planes
+        return self
 
 class heightSplit():
     def __init__(self, distance_threshold=0.45):
@@ -113,11 +121,13 @@ class PlanesCluster():
     def fit(self, X):
         best_score = -np.inf
         best_labels = []    
+        best_planes = []
 
         scores_ = []
         for n_planes in range(1, self.maxPlanes+1):
             best_score_n = -np.inf
             best_labels_n = []    
+            best_planes_n = []
 
             for i in range(self.num_iterations):
                 # Sample points and get planes
@@ -174,24 +184,29 @@ class PlanesCluster():
                     except:
                         pass
                 rmse = root_mean_squared_error(inliers[:,2], prediction)
-                if(len(planes) == 0):
+                if(len(planes) == 0 or len(X) == 0):
                     score = 0
+                elif rmse == 0:
+                    score = np.inf
                 else:
                     score = len(inliers)/len(X)*1/rmse #1/len(planes)
                 
                 if(score > best_score_n):
                     best_score_n = score
-                    best_labels_n = labels    
+                    best_labels_n = labels
+                    best_planes_n = planes    
 
             if(best_score_n > best_score):
                 best_score = best_score_n
                 best_labels = best_labels_n
+                best_planes = planes
 
             scores_.append(best_score_n)
             # else:
             #     break
         self.scores_ = scores_ 
         self.labels_ = best_labels
+        self.planes = best_planes
         return self
 
     def predict(self, X):

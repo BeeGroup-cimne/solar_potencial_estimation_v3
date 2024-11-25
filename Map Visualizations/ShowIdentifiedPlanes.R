@@ -13,7 +13,7 @@ neighborhoods <- c("Test_70_el Besòs i el Maresme")
 cadaster_sf_list <- list()
 planes_sf_list <- list()
 
-searchPath <- "/Plane Processing/Cadaster Fitting/Geopackages/"
+searchPath <- "/Plane Identification/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
   for (parcel in parcels){
@@ -32,6 +32,7 @@ for (neighborhood in neighborhoods){
     
     for (construction in constructions){
       planes <- list.files(path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), recursive = FALSE, full.names = FALSE)
+      planes <- planes[!file.info(file.path(paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), planes))$isdir]
       if(length(planes) > 0){
         gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath, planes)
         partial_planes_sf_list <- lapply(gpkg_files, function(file) {
