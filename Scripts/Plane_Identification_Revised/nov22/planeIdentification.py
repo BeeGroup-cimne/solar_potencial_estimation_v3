@@ -59,9 +59,11 @@ class heightSplit():
         self.distance_threshold = distance_threshold
         
     def fit(self, X):
+        self.heightChanges = []
         n_samples, n_features = X.shape
 
-        X = X[X[:, 2].argsort()]
+        reorder = X[:, 2].argsort() 
+        X = X[reorder]
         
         deltaZ = np.diff(X[:,2], prepend=0)
         
@@ -71,22 +73,24 @@ class heightSplit():
         for i in range(1, len(deltaZ)):
             if deltaZ[i] > self.distance_threshold:
                 current_label += 1
-            labels[i] = current_label
+                self.heightChanges.append(X[i-1,2])
+            labels[reorder[i]] = current_label
 
         self.labels_ = labels
+        # print("Split into", len(np.unique(self.labels_)), "heightgroups.")
         return self
 
     def predict(self, X):
         pass
 
-    def fit_predict(self, X, y=None):
-        self.fit(X)
-        return self.labels_
-    
+    def fit_predict(self, X, y=None):   
+        pass
+
 class PlanesCluster():
-    def __init__(self, inlierThreshold=0.15, num_iterations=10, maxPlanes=20, iterationsToConverge=10):
+    def __init__(self, inlierThreshold=0.15, num_iterations=10, minPlanes=1, maxPlanes=20, iterationsToConverge=10):
         self.inlierThreshold = inlierThreshold
         self.num_iterations = num_iterations
+        self.minPlanes = minPlanes
         self.maxPlanes = maxPlanes
         self.iterationsToConverge = iterationsToConverge
 
@@ -124,7 +128,7 @@ class PlanesCluster():
         best_planes = []
 
         scores_ = []
-        for n_planes in range(1, self.maxPlanes+1):
+        for n_planes in range(self.minPlanes, self.maxPlanes+1):
             best_score_n = -np.inf
             best_labels_n = []    
             best_planes_n = []
@@ -189,7 +193,7 @@ class PlanesCluster():
                 elif rmse == 0:
                     score = np.inf
                 else:
-                    score = len(inliers)/len(X)*1/rmse #1/len(planes)
+                    score = len(inliers)*1/rmse*1/len(planes)
                 
                 if(score > best_score_n):
                     best_score_n = score
@@ -213,5 +217,4 @@ class PlanesCluster():
         pass
 
     def fit_predict(self, X, y=None):
-        self.fit(X)
-        return self.labels_
+        pass
