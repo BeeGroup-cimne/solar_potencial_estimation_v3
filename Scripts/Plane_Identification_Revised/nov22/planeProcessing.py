@@ -1,4 +1,4 @@
-from shapely import Polygon, MultiPolygon
+from shapely import Polygon, MultiPolygon, get_rings, intersection
 import numpy as np
 import math
 import os
@@ -36,7 +36,7 @@ def fillMatrix(planeLists,  X, labels):
     
     return distanceMatrix, angleMatrix
 
-def canSimplify(distanceMatrix, angleMatrix, distanceThreshold=0.15, angleThreshold=5):
+def canSimplify(distanceMatrix, angleMatrix, distanceThreshold=0.3, angleThreshold=5):
     coordinates = [-1, -1]
     for i in range(len(distanceMatrix)):
         for j in range(len(distanceMatrix)):
@@ -53,9 +53,10 @@ def deletePositions(labels, planeLists, i, j):
         planeLists.pop(j) 
         planeLists.pop(i)
     
-    labels[np.where(labels == j)] = i
+    corrected_labels = labels
+    corrected_labels[np.where(corrected_labels == j)] = i
 
-    unique_labels = np.unique(labels)
+    unique_labels = np.unique(corrected_labels)
     mapping = {label: i for i, label in enumerate(unique_labels) if label != -1}
     corrected_labels = np.array([mapping[label] if label in mapping else -1 for label in labels])
 
@@ -67,7 +68,7 @@ def merge_planes(X, labels, planes):
     planeLists = []
 
     for idx, planeEq in enumerate(planes):
-        planeLists.append([planeEq.coef_[0], planeEq.coef_[1], -1, -planeEq.intercept_])
+        planeLists.append([planeEq.coef_[0], planeEq.coef_[1], -1, planeEq.intercept_])
 
     distanceMatrix, angleMatrix = fillMatrix(planeLists, X, labels)
     simplifyPos = canSimplify(distanceMatrix, angleMatrix)
@@ -81,7 +82,9 @@ def merge_planes(X, labels, planes):
         lm.fit(toMerge[:,0:2], toMerge[:,2])
         planeLists.append([lm.coef_[0], lm.coef_[1], -1, -lm.intercept_])
         
+        # print(len(np.unique(labels)))
         labels, planeLists = deletePositions(labels, planeLists, i, j)
+        # print(len(np.unique(labels)))
         distanceMatrix, angleMatrix = fillMatrix(planeLists, X, labels)
         simplifyPos = canSimplify(distanceMatrix, angleMatrix)
 
@@ -99,6 +102,35 @@ def delete_polygons_by_area(geometry, threshold):
             return MultiPolygon(filtered_polygons)
         else:
             return None
+    return geometry  # For non-polygon geometries, return as-is
+
+def clean_holes(geometry, threshold): #vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: clean_holes(geom, 0.25))
+    # Don't know why, but works bad
+    if isinstance(geometry, Polygon):
+        ext = Polygon(geometry.exterior)
+        rings = get_rings(geometry)
+        
+        for ring in rings:
+            hole = Polygon(ring)
+            if(hole.area > threshold): 
+                ext = intersection(ext, hole)
+                print(hole.area)
+
+        return ext
+    elif isinstance(geometry, MultiPolygon):
+        cleaned_polygons = []
+        for poly in list(geometry.geoms):
+            ext = Polygon(poly.exterior)
+            rings = get_rings(poly)
+            
+            for ring in rings:
+                hole = Polygon(ring)
+                if(hole.area > threshold): 
+                    ext = intersection(ext, hole)
+                    print(hole.area)
+
+            cleaned_polygons.append(ext)
+            return MultiPolygon(cleaned_polygons)
     return geometry  # For non-polygon geometries, return as-is
 
 # vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: filter_polygons_by_area(geom, 5))

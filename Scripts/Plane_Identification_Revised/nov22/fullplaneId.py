@@ -39,7 +39,7 @@ for parcel in tqdm(os.listdir(parcelsFolder)[5:6], desc="Looping through parcels
 
         pipeline = ClusterPipeline([
             heightSplit(distance_threshold = 0.45),  # First clustering stage
-            # PlanesCluster(inlierThreshold=0.15, minPlanes=5, maxPlanes=7),
+            PlanesCluster(inlierThreshold=0.30, num_iterations=10),
             # KMeans(n_clusters=3),
             # DBSCAN(eps=1.5, min_samples=8),
         ])
@@ -49,33 +49,47 @@ for parcel in tqdm(os.listdir(parcelsFolder)[5:6], desc="Looping through parcels
 
         labels = pipeline.final_labels
 
-        lasDF.add_extra_dim(laspy.ExtraBytesParams(
-            name="Labels",
-            type=np.int64))
-        lasDF["Labels"] = labels
+        # lasDF.add_extra_dim(laspy.ExtraBytesParams(
+        #     name="Labels",
+        #     type=np.int64))
         
-        lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
         # PlaneProcessing
         # labels, planeLists = merge_planes(lasDF.xyz, labels, pipeline.planes)
-       
+        lasDF.classification = labels
+        lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
+
+        plt.scatter(lasDF.x, lasDF.y, c=labels)
+        plt.show()
+
         vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
-        # vorClipped = vorClipped[vorClipped.cluster != -1]
+        vorClipped = vorClipped[vorClipped.cluster != -1]
+        
+        # #Z = Ax+By+D, but D in planeLists is negative, so we need to multiply by -1
+        # A_list = []
+        # B_list = []
+        # D_list = []
 
-        #Ax+By+Z=D, but D in planeLists is negative, so we need to multiply by -1
-        A_list = []
-        B_list = []
-        D_list = []
+        # # for idx, planeParams in enumerate(pipeline.planes):
+        # #     A_list.append(planeParams.coef_[0])
+        # #     B_list.append(planeParams.coef_[1])
+        # #     D_list.append(planeParams.intercept_)
+        # for idx, planeParams in enumerate(planeLists):
+        #     A_list.append(planeParams[0])
+        #     B_list.append(planeParams[1])
+        #     D_list.append(planeParams[3])
 
-        for idx, planeParams in enumerate(pipeline.planes):
-            A_list.append(planeParams.coef_[0])
-            B_list.append(planeParams.coef_[1])
-            D_list.append(planeParams.intercept_)
         
         # vorClipped["A"] = A_list
         # vorClipped["B"] = B_list                                                                                                                                                                                
         # vorClipped["D"] = D_list
 
-        # vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 2))
-        # vorClipped = vorClipped[vorClipped.geometry != None] 
-
+        vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 2))
+        vorClipped["geometry"] = vorClipped["geometry"].buffer(0.5)
+        vorClipped["geometry"] = vorClipped["geometry"].buffer(-0.5)
+        vorClipped = vorClipped[vorClipped.geometry != None] 
+        
         vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")
+
+        # vorClipped.plot(edgecolor='black', column="cluster", alpha=0.5, legend=True)
+        # plt.show()
+        

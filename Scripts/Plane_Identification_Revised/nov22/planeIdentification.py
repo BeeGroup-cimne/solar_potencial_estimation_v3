@@ -22,10 +22,11 @@ class ClusterPipeline:
             
             new_labels = np.zeros_like(current_labels)  # New labels for this stage
             unique_clusters = np.unique(current_labels)  # Unique clusters in current stage
-            cluster_offset = 0 
+            
 
             for cluster_id in unique_clusters:
-                
+                cluster_offset = 0 
+
                 cluster_data = current_data[current_labels == cluster_id]
                 if len(cluster_data) < 3:  # Skip small clusters
                     continue
@@ -35,7 +36,7 @@ class ClusterPipeline:
                 cluster_stage_labels = stage.labels_
 
                 # Assign new labels offset by cluster_offset
-                new_labels[current_labels == cluster_id] = (cluster_stage_labels + cluster_offset)
+                new_labels[(current_labels == cluster_id) & (current_labels != -1)] = (cluster_stage_labels + cluster_offset)
                 cluster_offset += len(np.unique(cluster_stage_labels)) # Update cluster offset for the next unique label
                 
 
@@ -129,6 +130,7 @@ class PlanesCluster():
 
         scores_ = []
         for n_planes in range(self.minPlanes, self.maxPlanes+1):
+            score = -np.inf
             best_score_n = -np.inf
             best_labels_n = []    
             best_planes_n = []
@@ -180,28 +182,26 @@ class PlanesCluster():
                 if(not np.array_equal(lastLabels, labels)): print("Did not converge")
                 
                 inliers = X[np.where(labels != -1)[0]]
-                labelsScore = labels[np.where(labels != -1)[0]]
-                prediction = np.zeros((inliers.shape[0]))
-                for plane_idx in range(len(planes)):
-                    try:
-                        prediction[np.where(labelsScore == plane_idx)[0]] = planes[plane_idx].predict(inliers[np.where(labelsScore == plane_idx)[0],0:2])
-                    except:
-                        pass
-                rmse = root_mean_squared_error(inliers[:,2], prediction)
-                if(len(planes) == 0 or len(X) == 0):
-                    score = 0
-                elif rmse == 0:
-                    score = np.inf
-                else:
-                    score = len(inliers)*1/rmse*1/len(planes)
-                
-                if(score > best_score_n):
-                    best_score_n = score
+                                
+                score_n = len(inliers)/len(X)
+                if(score_n > best_score_n):
+                    best_score_n = score_n
                     best_labels_n = labels
-                    best_planes_n = planes    
+                    best_planes_n = planes
 
-            if(best_score_n > best_score):
-                best_score = best_score_n
+                    labelsScore = labels[np.where(labels != -1)[0]]
+                    prediction = np.zeros((inliers.shape[0]))
+                    for plane_idx in range(len(planes)):
+                        try:
+                            prediction[np.where(labelsScore == plane_idx)[0]] = planes[plane_idx].predict(inliers[np.where(labelsScore == plane_idx)[0],0:2])
+                        except:
+                            pass
+                    rmse = root_mean_squared_error(selected_distances, np.zeros(len(selected_distances)))
+                    score = -rmse*len(planes)
+
+            if(score > best_score):
+                print(score)
+                best_score = score
                 best_labels = best_labels_n
                 best_planes = planes
 
