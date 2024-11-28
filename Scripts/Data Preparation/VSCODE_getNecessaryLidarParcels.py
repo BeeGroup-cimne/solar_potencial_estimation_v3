@@ -38,8 +38,8 @@ if __name__ == "__main__":
     neighborhood = "70_el Besòs i el Maresme"
     directory = basePath + "Results/" + neighborhood + "/Parcels/"
 
-    lidarsNeeded_df = getNecessaryLidarParcels(directory)
-    listPath = basePath + "Results/" + neighborhood + "/necessaryLiDAR_Buffer200.txt"
+    lidarsNeeded_df = getNecessaryLidarParcels(directory, buffer = 100)
+    listPath = basePath + "Results/" + neighborhood + "/necessaryLiDAR_Buffer100.txt"
     lidarsNeeded_df.to_csv(listPath, index = False)
 
     lidarsNeeded_df = getNecessaryLidarParcels(directory, buffer = 0)

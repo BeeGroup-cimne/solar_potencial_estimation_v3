@@ -1,0 +1,45 @@
+import os
+
+project = QgsProject.instance()
+for layer in project.mapLayers().values():
+    if layer.type() == QgsMapLayer.VectorLayer:  # Check if the layer is a vector layer
+        project.removeMapLayer(layer)
+    
+basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Parcels/"
+for parcel in os.listdir(basePath):
+    parcelSubfolder = basePath + parcel + "/"
+    directory = os.path.abspath(parcelSubfolder + parcel + ".gpkg")
+    parcel_layer  = QgsVectorLayer(directory,parcel,"ogr")
+
+    # Access the layer's renderer and symbol
+    renderer = parcel_layer.renderer()
+    symbol = renderer.symbol()
+
+    symbol.setOpacity(0)
+    for layer_style in symbol.symbolLayers():
+        layer_style.setStrokeWidth(2)  # Set stroke weight to 1.5 units
+        layer_style.setBrushStyle(1)
+        layer_style.setStrokeColor(QColor(0, 0, 100))
+    parcel_layer.triggerRepaint()
+
+    QgsProject.instance().addMapLayer(parcel_layer)
+    
+    for file in [x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)]:
+        directory = os.path.abspath(parcelSubfolder + file + "/Map files/" + file + ".gpkg")
+        construction_layer  = QgsVectorLayer(directory,file,"ogr")
+        
+        # Access the layer's renderer and symbol
+        renderer = construction_layer.renderer()
+        symbol = renderer.symbol()
+
+        symbol.setOpacity(1)
+        for layer_style in symbol.symbolLayers():
+            layer_style.setStrokeWidth(1)  # Set stroke weight to 1.5 units
+            layer_style.setBrushStyle(0)
+            layer_style.setStrokeColor(QColor(50, 50, 200))
+            
+        construction_layer.triggerRepaint()
+
+        QgsProject.instance().addMapLayer(construction_layer)
+
+    print("Parcel:", parcel + ".", len([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)]), "constructions inside")

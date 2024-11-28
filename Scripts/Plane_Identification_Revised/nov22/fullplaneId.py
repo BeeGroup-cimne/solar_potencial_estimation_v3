@@ -24,10 +24,10 @@ basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_esti
 neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-for parcel in tqdm(os.listdir(parcelsFolder)[5:6], desc="Looping through parcels"):
-    print(parcel)
+for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    # print(parcel)
     parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder)[0:1] if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
         constructionFolder = parcelSubfolder + construction
         create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
         create_output_folder(constructionFolder + "/Plane Identification/Plane Points")
@@ -39,7 +39,7 @@ for parcel in tqdm(os.listdir(parcelsFolder)[5:6], desc="Looping through parcels
 
         pipeline = ClusterPipeline([
             heightSplit(distance_threshold = 0.45),  # First clustering stage
-            PlanesCluster(inlierThreshold=0.30, num_iterations=10),
+            PlanesCluster(inlierThreshold=0.15, num_iterations=20),
             # KMeans(n_clusters=3),
             # DBSCAN(eps=1.5, min_samples=8),
         ])
@@ -54,41 +54,44 @@ for parcel in tqdm(os.listdir(parcelsFolder)[5:6], desc="Looping through parcels
         #     type=np.int64))
         
         # PlaneProcessing
-        # labels, planeLists = merge_planes(lasDF.xyz, labels, pipeline.planes)
+        labels, planeLists = merge_planes(lasDF.xyz, labels, pipeline.planes)
         lasDF.classification = labels
         lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
 
-        plt.scatter(lasDF.x, lasDF.y, c=labels)
-        plt.show()
+        # plt.scatter(lasDF.x, lasDF.y, c=labels)
+        # plt.show()
 
-        vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
-        vorClipped = vorClipped[vorClipped.cluster != -1]
+        # vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
+
         
         # #Z = Ax+By+D, but D in planeLists is negative, so we need to multiply by -1
         # A_list = []
         # B_list = []
         # D_list = []
 
-        # # for idx, planeParams in enumerate(pipeline.planes):
-        # #     A_list.append(planeParams.coef_[0])
-        # #     B_list.append(planeParams.coef_[1])
-        # #     D_list.append(planeParams.intercept_)
-        # for idx, planeParams in enumerate(planeLists):
-        #     A_list.append(planeParams[0])
-        #     B_list.append(planeParams[1])
-        #     D_list.append(planeParams[3])
+        # for idx, planeParams in enumerate(pipeline.planes):
+        #     if idx in vorClipped.cluster:
+        #         A_list.append(planeParams.coef_[0])
+        #         B_list.append(planeParams.coef_[1])
+        #         D_list.append(planeParams.intercept_)
+        # # for idx, planeParams in enumerate(planeLists):
+        # #     if idx in vorClipped.cluster:
+        # #         A_list.append(planeParams[0])
+        # #         B_list.append(planeParams[1])
+        # #         D_list.append(planeParams[3])
 
         
         # vorClipped["A"] = A_list
         # vorClipped["B"] = B_list                                                                                                                                                                                
         # vorClipped["D"] = D_list
 
-        vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 2))
-        vorClipped["geometry"] = vorClipped["geometry"].buffer(0.5)
-        vorClipped["geometry"] = vorClipped["geometry"].buffer(-0.5)
-        vorClipped = vorClipped[vorClipped.geometry != None] 
+        # vorClipped = vorClipped[vorClipped.cluster != -1]
+        # vorClipped["geometry"] = vorClipped["geometry"].buffer(0.25)
+        # vorClipped["geometry"] = vorClipped["geometry"].buffer(-0.25)
+        # vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 2))
+        # vorClipped = vorClipped[vorClipped.geometry != None] 
         
-        vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")
+        # vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")
 
         # vorClipped.plot(edgecolor='black', column="cluster", alpha=0.5, legend=True)
         # plt.show()

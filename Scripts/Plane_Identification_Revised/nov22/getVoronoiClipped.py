@@ -9,18 +9,6 @@ from shapely.ops import unary_union
 from scipy.spatial import Voronoi
 
 def get_boundary(bound, offset = 100, steps=10):
-    # Does not work with miniVoronoi
-    # try:
-        # x_bottom_top = np.linspace(bound.minx - offset, bound.maxx + offset, steps)
-        # y_left_right = np.linspace(bound.miny - offset, bound.maxy + offset, steps)
-
-        # bottom_points = np.column_stack([x_bottom_top, np.repeat(bound.miny - offset, steps)])
-        # top_points = np.column_stack([x_bottom_top, np.repeat(bound.maxy + offset, steps)])
-        # left_points = np.column_stack([np.repeat(bound.minx - offset, steps), y_left_right])
-        # right_points = np.column_stack([np.repeat(bound.maxx + offset, steps), y_left_right])
-        # boundarycoords = np.vstack([bottom_points, top_points, left_points, right_points])
-        # boundarycoords = np.unique(boundarycoords, axis=0)
-    # except:
     x_bottom_top = np.linspace(bound[0] - offset, bound[2] + offset, steps)
     y_left_right = np.linspace(bound[1] - offset, bound[3] + offset, steps)
 
@@ -48,7 +36,7 @@ def obtainLabelsPolygons(vorAll, labels):
                 else:
                     outline = Polygon(vorAll.vertices[region])
                     points = vorAll.points[indices]
-                    if(np.all((points == points[0]).all())):
+                    if(not np.all((points == points[0]).all())):
                         boundarycoords = get_boundary(outline.bounds)
                         allPoints = np.concatenate((points[:,0:2], boundarycoords))
                         miniVor = Voronoi(allPoints)

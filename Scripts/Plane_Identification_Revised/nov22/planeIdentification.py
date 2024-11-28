@@ -50,8 +50,8 @@ class ClusterPipeline:
     def getAllPlanes(self, X):
         planes = []
         for cluster in np.unique(self.final_labels):
-            if cluster != -1:
-                planes.append(LinearRegression().fit(X[np.where(self.final_labels == cluster)[0], 0:2], X[np.where(self.final_labels == cluster)[0],2]))
+            # if cluster != -1:
+            planes.append(LinearRegression().fit(X[np.where(self.final_labels == cluster)[0], 0:2], X[np.where(self.final_labels == cluster)[0],2]))
         self.planes = planes
         return self
 
@@ -88,7 +88,7 @@ class heightSplit():
         pass
 
 class PlanesCluster():
-    def __init__(self, inlierThreshold=0.15, num_iterations=10, minPlanes=1, maxPlanes=20, iterationsToConverge=10):
+    def __init__(self, inlierThreshold=0.15, num_iterations=10, minPlanes=2, maxPlanes=20, iterationsToConverge=10):
         self.inlierThreshold = inlierThreshold
         self.num_iterations = num_iterations
         self.minPlanes = minPlanes
@@ -170,7 +170,7 @@ class PlanesCluster():
                         distances[:, plane_idx] = abs(X[:,2] - planes[plane_idx].predict(X[:,0:2]))
                     labels = np.argmin(distances, axis=1)
 
-                    selected_distances = np.array([distances[i, idx] for i, idx in enumerate(labels)])
+                    selected_distances = np.array([distances[i, label] for i, label in enumerate(labels)])
                     labels[np.where(selected_distances > self.inlierThreshold)[0]] = -1
                     
                     if(np.array_equal(lastLabels, labels)):
@@ -197,10 +197,23 @@ class PlanesCluster():
                         except:
                             pass
                     rmse = root_mean_squared_error(selected_distances, np.zeros(len(selected_distances)))
-                    score = -rmse*len(planes)
+
+                    # Silhouette score
+                    outerDistances = []
+                    for i, row in enumerate(distances):
+                        if(labels[i] != -1):
+                            ignore_index = labels[i]
+                            masked_row = np.delete(row, ignore_index)
+                            min_value = np.min(masked_row)
+                            outerDistances.append(min_value)
+
+                    b = np.array(outerDistances)
+                    a = selected_distances[np.where(labels != -1)]
+                    score = 1/len(inliers)*np.sum( (b-a) /np.maximum(b, a) )
+                    # score = -rmse*len(planes)
 
             if(score > best_score):
-                print(score)
+                # print(score)
                 best_score = score
                 best_labels = best_labels_n
                 best_planes = planes
