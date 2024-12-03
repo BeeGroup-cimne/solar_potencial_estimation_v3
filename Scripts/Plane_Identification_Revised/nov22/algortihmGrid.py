@@ -24,6 +24,7 @@ def create_output_folder(directory, deleteFolder = False):
 
 params1 = {"eps":[0.15, 1.5], 
            "min_samples":[4, 10]}
+
 params2 = [{"distance_threshold":[0.5, 1]}, 
             {
                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
