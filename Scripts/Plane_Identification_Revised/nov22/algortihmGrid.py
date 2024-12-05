@@ -9,8 +9,8 @@ import time
 import itertools
 import tqdm
 
-import warnings
-warnings.filterwarnings("ignore")
+# import warnings
+# warnings.filterwarnings("ignore")
 
 def create_output_folder(directory, deleteFolder = False):
     if not(os.path.isdir(directory)):
@@ -22,25 +22,56 @@ def create_output_folder(directory, deleteFolder = False):
 
 # We define each algorithm
 
-params1 = {"eps":[0.15, 1.5], 
-           "min_samples":[4, 10]}
-
-params2 = [{"distance_threshold":[0.5, 1]}, 
+params1 = [{"distance_threshold":[0.5]}, 
             {
-               "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
-               "num_iterations": [5, 10, 20, 50, 100]
+                "useDistanceSampling": [True, False],
+                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
+                "num_iterations": [5, 10, 20, 50]
+            }]
+
+params2 = [{"distance_threshold":[0.5]}, 
+            {
+                "useDistanceSampling": [True, False],
+                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
+                "num_iterations": [5, 10, 20, 50]
+            }]
+params3 = [{"distance_threshold":[0.5]}, 
+            {
+                "squareSize":[0.25, 0.5, 1, 2],
+                "polar": [True, False],
+                "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+                "DBSCANminSamples": [4, 8, 12]
+            }]
+params4 = [{"distance_threshold":[0.5]}, 
+            {
+                "squareSize":[0.5, 1],
+                "polar": [True, False],
+                "DBSCANeps": [0.5, 1, 1.5, 2],
+                "DBSCANminSamples": [4,  12]
+            },
+            {
+                "eps": [0.1, 0.5, 1, 2],
+                "min_samples": [4, 12]
             }]
 
 algorithms =[
-            #  {"name":"DBSCAN", 
-            #   "alg": [DBSCAN], 
-            #   "parameters": [params1.keys()], 
-            #   "values": [[params1[key] for key in params1.keys()]]
-            #   },
-             {"name":"KPlanes", 
-              "alg": [heightSplit, PlanesCluster], 
-              "parameters": [params2[i].keys() for i in range(len(params2))], 
-              "values": [[params2[i][key] for key in params2[i].keys()]  for i in range(len(params2))]}]
+            # {"name":"planeExtract", 
+            #   "alg": [HeightSplit, PlaneExtraction], 
+            #   "parameters": [params1[i].keys() for i in range(len(params1))], 
+            #   "values": [[params1[i][key] for key in params1[i].keys()]  for i in range(len(params1))]},
+            # {"name":"KPlanes", 
+            #   "alg": [HeightSplit, PlanesCluster], 
+            #   "parameters": [params2[i].keys() for i in range(len(params2))], 
+            #   "values": [[params2[i][key] for key in params2[i].keys()]  for i in range(len(params2))]},
+            #   {"name":"GradientDBSCAN", 
+            #   "alg": [HeightSplit, GradientCluster], 
+            #   "parameters": [params3[i].keys() for i in range(len(params3))], 
+            #   "values": [[params3[i][key] for key in params3[i].keys()]  for i in range(len(params3))]}
+               {"name":"GradientDoubleDBSCAN", 
+              "alg": [HeightSplit, GradientCluster, DBSCAN], 
+              "parameters": [params4[i].keys() for i in range(len(params4))], 
+              "values": [[params4[i][key] for key in params4[i].keys()]  for i in range(len(params4))]}
+              ]
 
 ### Now we start the algorithms
 
@@ -63,7 +94,7 @@ for algo_dict in tqdm.tqdm(algorithms, desc="Iterating through algorithms", leav
     for combs in itertools.product(*[c[1] for c in all_combinations]):
         stage_combinations.append(combs)
 
-    for stage_combination in stage_combinations:
+    for stage_combination in tqdm.tqdm(stage_combinations, desc="Doing all combinations", leave=True):
         pipeline_instances = []
         paramNames = []
         for stage_class, params, combination in zip(pipeline_classes, all_parameters, stage_combination):

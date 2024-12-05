@@ -38,7 +38,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
         cadasterGDF = gpd.read_file(gpkgFile)
 
         pipeline = ClusterPipeline([
-            heightSplit(distance_threshold = 0.45),  # First clustering stage
+            HeightSplit(distance_threshold = 0.45),  # First clustering stage
             PlanesCluster(inlierThreshold=0.15, num_iterations=20),
             # KMeans(n_clusters=3),
             # DBSCAN(eps=1.5, min_samples=8),
