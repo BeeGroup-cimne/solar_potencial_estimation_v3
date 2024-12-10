@@ -33,19 +33,25 @@ def obtainLabelsPolygons(vorAll, labels):
                     polygon = Polygon(vorAll.vertices[region])
                     clustersPolygons.append(selectedLabels[0])
                     voronoi_polygons_list.append(polygon)
-                else:
-                    outline = Polygon(vorAll.vertices[region])
-                    points = vorAll.points[indices]
-                    if(not np.all((points == points[0]).all())):
-                        boundarycoords = get_boundary(outline.bounds)
-                        allPoints = np.concatenate((points[:,0:2], boundarycoords))
-                        miniVor = Voronoi(allPoints)
-                        subVorList, subClusterList = obtainLabelsPolygons(miniVor, selectedLabels)
-                        subVorList = [intersection(x.buffer(0), outline.buffer(0)) for x in subVorList]
-                        voronoi_polygons_list += subVorList
-                        clustersPolygons += subClusterList
-                    else:
+                else:   
+                    try:
+                        outline = Polygon(vorAll.vertices[region])
+                        points = vorAll.points[indices]
+                        if(not np.all((points == points[0]).all())):
+                            boundarycoords = get_boundary(outline.bounds)
+                            allPoints = np.concatenate((points[:,0:2], boundarycoords))
+                            miniVor = Voronoi(allPoints)
+                            subVorList, subClusterList = obtainLabelsPolygons(miniVor, selectedLabels)
+                            subVorList = [intersection(x.buffer(0), outline.buffer(0)) for x in subVorList]
+                            voronoi_polygons_list += subVorList
+                            clustersPolygons += subClusterList
+                        else:
+                            clustersPolygons.append(selectedLabels[0])
+                            voronoi_polygons_list.append(outline)
+                    except RecursionError:
+                        print("There was an Infinite Recursion Error!")
                         clustersPolygons.append(selectedLabels[0])
+                        outline = Polygon(vorAll.vertices[region])
                         voronoi_polygons_list.append(outline)
 
     return voronoi_polygons_list, clustersPolygons
@@ -71,8 +77,10 @@ def getVoronoiClipped(points, labels, cadasterGDF):
     voronoi_polygons_list, clustersPolygons = obtainLabelsPolygons(vorAll, labels)
 
     vorGDF = gpd.GeoDataFrame({"geometry":voronoi_polygons_list, "cluster":clustersPolygons}, crs=cadasterGDF.crs)
-    vorGDF.buffer(0)
+    
     vorGDF["geometry"] = vorGDF.geometry.apply(make_valid)
+    vorGDF["geometry"] = vorGDF["geometry"].buffer(0.01)
+    vorGDF["geometry"] = vorGDF["geometry"].buffer(-0.01)
     merged_gdf = vorGDF.dissolve(by = 'cluster').reset_index()
     merged_gdf["geometry"] = merged_gdf["geometry"].apply(unary_union)
     clippedGDF = gpd.clip(merged_gdf, cadasterGDF, sort=True)

@@ -20,15 +20,18 @@ class ClusterPipeline:
         
         current_data = X 
         current_labels = np.zeros(X.shape[0], dtype=int)  # Initialize labels
+        cluster_offset = 0
 
         for stage in self.clustering_stages:
             
-            new_labels = np.zeros_like(current_labels)  # New labels for this stage
+            new_labels = np.full(len(current_labels), -1)  # New labels for this stage
+            # new_labels = np.zeros_like(current_labels)  # New labels for this stage
             unique_clusters = np.unique(current_labels)  # Unique clusters in current stage
+            unique_clusters = unique_clusters[unique_clusters != -1]
             
-
+            
             for cluster_id in unique_clusters:
-                cluster_offset = 0 
+                
 
                 cluster_data = current_data[current_labels == cluster_id]
                 if len(cluster_data) < 3:  # Skip small clusters
@@ -37,18 +40,19 @@ class ClusterPipeline:
                 # Fit the clustering algorithm to the current cluster
                 stage.fit(cluster_data)
                 cluster_stage_labels = stage.labels_
-
-                # Assign new labels offset by cluster_offset
-                if(cluster_id != -1):
-                    new_labels[(current_labels == cluster_id) & (current_labels != -1)] = (cluster_stage_labels + cluster_offset)
                 cluster_offset += len(np.unique(cluster_stage_labels)) # Update cluster offset for the next unique label
                 
-
+                # Assign new labels offset by cluster_offset
+                new_labels[(current_labels == cluster_id) & (current_labels != -1)] = (cluster_stage_labels + cluster_offset)
+                
+                
             # Store the stage labels and update current labels
-            self.stage_labels.append(new_labels.copy())
+            self.stage_labels = new_labels.copy()
             current_labels = new_labels
             
-        self.final_labels = self.stage_labels[-1]
+        self.final_labels = self.stage_labels
+        min_label = min([label for label in self.stage_labels if label != -1])
+        self.final_labels = [(label - min_label if label != -1 else -1) for label in self.stage_labels]
         return self
     
     def getAllPlanes(self, X):

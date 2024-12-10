@@ -1,4 +1,4 @@
-from shapely import Polygon, MultiPolygon, get_rings, intersection
+from shapely import Polygon, MultiPolygon, get_rings, unary_union
 import numpy as np
 import math
 import os
@@ -107,30 +107,24 @@ def delete_polygons_by_area(geometry, threshold):
 def clean_holes(geometry, threshold): #vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: clean_holes(geom, 0.25))
     # Don't know why, but works bad
     if isinstance(geometry, Polygon):
-        ext = Polygon(geometry.exterior)
-        rings = get_rings(geometry)
-        
-        for ring in rings:
-            hole = Polygon(ring)
+        ext = Polygon(geometry.exterior)      
+        for hole in geometry.interiors:
             if(hole.area > threshold): 
-                ext = intersection(ext, hole)
-                print(hole.area)
+                ext = ext.difference(hole)
 
         return ext
     elif isinstance(geometry, MultiPolygon):
         cleaned_polygons = []
-        for poly in list(geometry.geoms):
-            ext = Polygon(poly.exterior)
-            rings = get_rings(poly)
+        for geom in list(geometry.geoms):
+            ext = Polygon(geom.exterior)
             
-            for ring in rings:
-                hole = Polygon(ring)
+            for hole in geom.interiors:
                 if(hole.area > threshold): 
-                    ext = intersection(ext, hole)
-                    print(hole.area)
+                    ext = ext.difference(hole)
 
             cleaned_polygons.append(ext)
-            return MultiPolygon(cleaned_polygons)
+        return MultiPolygon(cleaned_polygons)
+    
     return geometry  # For non-polygon geometries, return as-is
 
 # vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: filter_polygons_by_area(geom, 5))

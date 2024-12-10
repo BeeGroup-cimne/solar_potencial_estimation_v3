@@ -138,3 +138,5 @@ for algo_dict in tqdm.tqdm(algorithms, desc="Iterating through algorithms", leav
                 create_output_folder(outputFolder)
                 lasDF.write(outputFolder + "/" + construction+".laz")
 
+                del lasDF
+

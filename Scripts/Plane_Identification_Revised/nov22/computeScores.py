@@ -23,36 +23,36 @@ params1 = [{"distance_threshold":[0.5]},
                 "num_iterations": [5, 10, 20, 50]
             }]
 
-params2 = [{"distance_threshold":[0.5]}, 
-            {
-                "useDistanceSampling": [True, False],
-                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
-                "num_iterations": [5, 10, 20, 50]
-            }]
-params3 = [{"distance_threshold":[0.5]}, 
-            {
-                "squareSize":[0.25, 0.5, 1, 2],
-                "polar": [True, False],
-                "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
-                "DBSCANminSamples": [4, 8, 12]
-            }]
-params4 = [{"distance_threshold":[0.5]}, 
-            {
-                "squareSize":[0.25, 0.5, 1, 2],
-                "polar": [True, False],
-                "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
-                "DBSCANminSamples": [4, 8, 12]
-            },
-            {
-                "eps": [0.1, 0.25, 0.5, 1, 1.5, 2],
-                "min_samples": [4, 8, 12]
-            }]
+# params2 = [{"distance_threshold":[0.5]}, 
+#             {
+#                 "useDistanceSampling": [True, False],
+#                 "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
+#                 "num_iterations": [5, 10, 20, 50]
+#             }]
+# params3 = [{"distance_threshold":[0.5]}, 
+#             {
+#                 "squareSize":[0.25, 0.5, 1, 2],
+#                 "polar": [True, False],
+#                 "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+#                 "DBSCANminSamples": [4, 8, 12]
+#             }]
+# params4 = [{"distance_threshold":[0.5]}, 
+#             {
+#                 "squareSize":[0.25, 0.5, 1, 2],
+#                 "polar": [True, False],
+#                 "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+#                 "DBSCANminSamples": [4, 8, 12]
+#             },
+#             {
+#                 "eps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+#                 "min_samples": [4, 8, 12]
+#             }]
 
 algorithms =[
-            # {"name":"planeExtract", 
-            #   "alg": [HeightSplit, PlaneExtraction], 
-            #   "parameters": [params1[i].keys() for i in range(len(params1))], 
-            #   "values": [[params1[i][key] for key in params1[i].keys()]  for i in range(len(params1))]},
+            {"name":"planeExtract", 
+              "alg": [HeightSplit, PlaneExtraction], 
+              "parameters": [params1[i].keys() for i in range(len(params1))], 
+              "values": [[params1[i][key] for key in params1[i].keys()]  for i in range(len(params1))]},
             # {"name":"KPlanes", 
             #   "alg": [HeightSplit, PlanesCluster], 
             #   "parameters": [params2[i].keys() for i in range(len(params2))], 
