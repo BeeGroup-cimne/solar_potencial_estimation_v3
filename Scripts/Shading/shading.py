@@ -101,7 +101,7 @@ def get_shading_profile(point, X, Y, Z):
     })
 
     max_tilt_df = df.groupby('azimuth')['tiltangle'].max().reset_index()
-
+    max_tilt_df["tiltangle"] = max_tilt_df["tiltangle"].round()
     return max_tilt_df.tiltangle.values
 
 

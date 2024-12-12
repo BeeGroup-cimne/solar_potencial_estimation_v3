@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 from planeIdentification import *
-from sklearn.cluster import DBSCAN, KMeans
+from sklearn.cluster import DBSCAN, KMeans, HDBSCAN
 import shutil
 import os
 import time
@@ -24,35 +24,38 @@ def create_output_folder(directory, deleteFolder = False):
 
 params1 = [{"distance_threshold":[0.5]}, 
             {
-                "useDistanceSampling": [True, False],
-                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
+                "useDistanceSampling": [True,],
+                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3],
                 "num_iterations": [5, 10, 20, 50]
             }]
 
 params2 = [{"distance_threshold":[0.5]}, 
             {
-                "useDistanceSampling": [True, False],
+                "useDistanceSampling": [True],
                 "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
                 "num_iterations": [5, 10, 20, 50]
             }]
 params3 = [{"distance_threshold":[0.5]}, 
             {
-                "squareSize":[0.25, 0.5, 1, 2],
+                "squareSize":[0.5, 1],
                 "polar": [True, False],
-                "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
-                "DBSCANminSamples": [4, 8, 12]
+                # "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+                # "DBSCANminSamples": [4, 8, 12]
             }]
 params4 = [{"distance_threshold":[0.5]}, 
             {
                 "squareSize":[0.5, 1],
                 "polar": [True, False],
-                "DBSCANeps": [0.5, 1, 1.5, 2],
-                "DBSCANminSamples": [4,  12]
+                # "DBSCANeps": [0.5, 1, 2],
+                # "DBSCANminSamples": [100, 50, 10]
             },
-            {
-                "eps": [0.1, 0.5, 1, 2],
-                "min_samples": [4, 12]
-            }]
+            {   
+            },
+            # {
+            #     "eps": [0.5, 1, 2],
+            #     "min_samples": [100, 50, 10]
+            # }
+            ]
 
 algorithms =[
             # {"name":"planeExtract", 
@@ -63,14 +66,14 @@ algorithms =[
             #   "alg": [HeightSplit, PlanesCluster], 
             #   "parameters": [params2[i].keys() for i in range(len(params2))], 
             #   "values": [[params2[i][key] for key in params2[i].keys()]  for i in range(len(params2))]},
-            #   {"name":"GradientDBSCAN", 
-            #   "alg": [HeightSplit, GradientCluster], 
-            #   "parameters": [params3[i].keys() for i in range(len(params3))], 
-            #   "values": [[params3[i][key] for key in params3[i].keys()]  for i in range(len(params3))]}
-               {"name":"GradientDoubleDBSCAN", 
-              "alg": [HeightSplit, GradientCluster, DBSCAN], 
-              "parameters": [params4[i].keys() for i in range(len(params4))], 
-              "values": [[params4[i][key] for key in params4[i].keys()]  for i in range(len(params4))]}
+              {"name":"GradientHDBSCAN", 
+              "alg": [HeightSplit, GradientCluster], 
+              "parameters": [params3[i].keys() for i in range(len(params3))], 
+              "values": [[params3[i][key] for key in params3[i].keys()]  for i in range(len(params3))]}
+            #    {"name":"GradientDoubleHDBSCAN", 
+            #   "alg": [HeightSplit, GradientCluster, HDBSCAN], #"alg": [HeightSplit, GradientCluster, DBSCAN] 
+            #   "parameters": [params4[i].keys() for i in range(len(params4))], 
+            #   "values": [[params4[i][key] for key in params4[i].keys()]  for i in range(len(params4))]}
               ]
 
 ### Now we start the algorithms

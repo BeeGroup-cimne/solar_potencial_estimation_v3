@@ -19,7 +19,7 @@ neighborhood = "Test_70_el Besòs i el Maresme"
 params1 = [{"distance_threshold":[0.5]}, 
             {
                 "useDistanceSampling": [True, False],
-                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3, 100],
+                "inlierThreshold":[0.01, 0.025, 0.05, 0.10, 0.15, 0.3],
                 "num_iterations": [5, 10, 20, 50]
             }]
 

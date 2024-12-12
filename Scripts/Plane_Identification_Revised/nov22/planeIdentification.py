@@ -7,7 +7,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import root_mean_squared_error
 import math
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, HDBSCAN
 
 
 class ClusterPipeline:
@@ -34,9 +34,12 @@ class ClusterPipeline:
                 
 
                 cluster_data = current_data[current_labels == cluster_id]
-                if len(cluster_data) < 3:  # Skip small clusters
-                    continue
+                # if len(cluster_data) < 3:  # Skip small clusters
+                #     continue
                 
+                if len(cluster_data) < 5:  # Skip small clusters
+                    continue
+
                 # Fit the clustering algorithm to the current cluster
                 stage.fit(cluster_data)
                 cluster_stage_labels = stage.labels_
@@ -276,19 +279,20 @@ class GradientCluster():
         return gradients
 
     def fit(self, X):
-        dbscan = DBSCAN(eps=self.DBSCANeps, min_samples=self.DBSCANminSamples)
-
+        # cluster_alg = DBSCAN(eps=self.DBSCANeps, min_samples=self.DBSCANminSamples)
+        cluster_alg = HDBSCAN()
+        
         gradients = self.computeGradients(X)
         if(self.polar):
             polar_gradients = np.zeros(gradients.shape)
-            polar_gradients[:, 0] = np.sqrt(gradients[:, 0]**2 + gradients[:, 1]**2)*self.scaleFactorMagnitude
-            polar_gradients[:, 1] = np.arctan2(gradients[:, 1], gradients[:, 0])*180/math.pi*self.scaleFactorAngle
+            polar_gradients[:, 0] = np.sqrt(gradients[:, 0]**2 + gradients[:, 1]**2)
+            polar_gradients[:, 1] = np.arctan2(gradients[:, 1], gradients[:, 0])*180/math.pi
 
-            dbscan.fit(polar_gradients)
+            cluster_alg.fit(polar_gradients)
         else:
-            dbscan.fit(gradients)
+            cluster_alg.fit(gradients)
  
-        self.labels_ = dbscan.labels_
+        self.labels_ = cluster_alg.labels_
         return self
     
 class PlaneExtraction():
