@@ -80,4 +80,5 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
   addScaleBar()
 
 map2
+saveWidget(map2, file="m.html")
 # 

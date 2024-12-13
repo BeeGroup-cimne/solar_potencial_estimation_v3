@@ -146,6 +146,7 @@ class PlanesCluster():
         for n_planes in range(self.minPlanes, self.maxPlanes+1):
             score = -np.inf
             best_score_n = -np.inf
+            inliers_n = 0 
             best_labels_n = []    
             best_planes_n = []
 
@@ -195,21 +196,14 @@ class PlanesCluster():
                 
                 # For the same number of planes, the score will be the number of inliers
                 inliers = X[np.where(labels != -1)[0]]
-                score_n = len(inliers)/len(X)
-
-                if(score_n > best_score_n):
-                    best_score_n = score_n
+                inliers_n = len(inliers)/len(X)
+                
+                # This needs a fix, as it won't work when InlierThreshold is infinite
+                if(inliers_n > best_inliers_n):
+                    best_inliers_n = inliers_n 
                     best_labels_n = labels
                     best_planes_n = planes
 
-                    labelsScore = labels[np.where(labels != -1)[0]]
-                    prediction = np.zeros((inliers.shape[0]))
-                    for plane_idx in range(len(planes)):
-                        try:
-                            prediction[np.where(labelsScore == plane_idx)[0]] = planes[plane_idx].predict(inliers[np.where(labelsScore == plane_idx)[0],0:2])
-                        except:
-                            pass
-                    
                     # Silhouette score
                     try:
                         minIndexes = np.argmin(distances, axis=1)
@@ -334,6 +328,8 @@ class PlaneExtraction():
 
             # Compute distances and find inliers
             distances = abs(X[:,2] - plane.predict(X[:,0:2]))
+            a, b, c, d = plane.coef_[0], plane.coef_[1], -1, plane.intercept_
+            distances = np.abs(a * X[:, 0] + b * X[:, 1] + c * X[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
             mask = (distances < self.inlierThreshold) & np.isin(np.arange(len(X)), selectableIndices)
             inliers = X[mask]
 

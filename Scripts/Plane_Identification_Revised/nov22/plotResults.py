@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tqdm
 
-base_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID/"
+base_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/"
 base_export_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane Information/Images/"
 
 for experiment in tqdm.tqdm(os.listdir(base_path)):

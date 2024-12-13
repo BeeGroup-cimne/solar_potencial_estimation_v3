@@ -125,3 +125,4 @@ sync_map <- browsable(tagList(
 # Save the synchronized map as an HTML file
 htmltools::save_html(sync_map, "synchronized_map.html")
 
+saveWidget(sync_map, "synchronized_map.html")
