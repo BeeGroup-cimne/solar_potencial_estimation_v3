@@ -13,6 +13,7 @@ from planeProcessing import *
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.linear_model import LinearRegression
 from shapely import unary_union, GeometryCollection
+import warnings
 
 def create_output_folder(directory, deleteFolder = False):
     if not(os.path.isdir(directory)):
@@ -61,6 +62,60 @@ def __getTiltAzimuth(normal):
 
         return (tilt, azimuth)
 
+def compute_silhouette(distances, cluster, labels):
+
+    minIndexes = np.argmin(distances, axis=1)
+    a = distances.min(axis=1)
+    
+    outerDistances = []
+    
+    for i, row in enumerate(distances):
+        ignore_index = minIndexes[i]
+        masked_row = np.delete(row, ignore_index)
+        min_value = np.min(masked_row)
+        outerDistances.append(min_value)
+
+    b = np.array(outerDistances)
+    diffTerm = b-a
+    maxTerm = np.maximum(b, a)
+    individual_silhouette = diffTerm/maxTerm
+
+    mask = np.where(labels == cluster)[0]
+    inClusterSilhouette = individual_silhouette[mask]
+    silhouetteScore = 1/len(inClusterSilhouette)*np.sum(inClusterSilhouette)
+
+    return silhouetteScore
+
+    # with warnings.catch_warnings():
+    #     warnings.filterwarnings("error", category=RuntimeWarning)
+
+    #     try:
+    #         mask = np.where(labels == cluster)[0]
+    #         inliers_distances = distances[mask, :]
+
+    #         minIndexes = np.argmin(inliers_distances, axis=1)
+    #         a = inliers_distances.min(axis=1)
+
+    #         outerDistances = []
+
+    #         for i, row in enumerate(inliers_distances):
+    #             ignore_index = minIndexes[i]
+    #             masked_row = np.delete(row, ignore_index)
+    #             min_value = np.min(masked_row)
+    #             outerDistances.append(min_value)
+
+    #         b = np.array(outerDistances)
+    #         diffTerm = b - a
+    #         maxTerm = np.maximum(b, a)
+    #         individual_silhouette = diffTerm / maxTerm
+    #         silhouetteScore = 1 / len(labels) * np.sum(individual_silhouette)
+
+    #         return silhouetteScore
+
+    #     except RuntimeWarning as e:
+    #         raise RuntimeError(f"A RuntimeWarning occurred: {e}")
+
+
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
     # print(parcel)
     parcelSubfolder = parcelsFolder + parcel + "/"
@@ -73,6 +128,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
         gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
         cadasterGDF = gpd.read_file(gpkgFile)
 
+        points = lasDF.xyz
         labels = lasDF.classification
         vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
         vorClipped = vorClipped[vorClipped.cluster != 255]  
@@ -83,6 +139,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
         D_list = []
         tilt_list = []
         azimuth_list = []
+        
         for idx in vorClipped.cluster:
             points = lasDF.xyz[np.where(lasDF.classification == idx)]
             planeParams = LinearRegression().fit(points[:, 0:2], points[:, 2])
@@ -92,12 +149,28 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
             tilt,azimuth = __getTiltAzimuth([planeParams.coef_[0], planeParams.coef_[1], -1, planeParams.intercept_])
             tilt_list.append(tilt)
             azimuth_list.append(azimuth)
-        
+
+        points = lasDF.xyz
+        silhouette_list = []
+        distances = np.zeros((points.shape[0], len(vorClipped.cluster)))
+
+        for plane_idx in range(len(vorClipped.cluster)):
+            a, b, c, d = A_list[plane_idx], B_list[plane_idx], -1, D_list[plane_idx]
+            distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + d - points[:, 2])
+            # distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + c * points[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
+
+        if(len(vorClipped.cluster.values) == 1):
+                silhouette_list.append(1)
+        else:
+            for cluster in vorClipped.cluster.values:
+                silhouette_list.append(compute_silhouette(distances, cluster, labels))
+ 
         vorClipped["A"] = A_list
         vorClipped["B"] = B_list                                                                                                                                                                                
         vorClipped["D"] = D_list
         vorClipped["tilt"] = tilt_list
         vorClipped["azimuth"] = azimuth_list
+        vorClipped["silhouette"] = silhouette_list
 
         vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 1))
         vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: clean_holes(geom, 0.25))

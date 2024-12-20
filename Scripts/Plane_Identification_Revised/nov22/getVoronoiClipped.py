@@ -49,7 +49,7 @@ def obtainLabelsPolygons(vorAll, labels):
                             clustersPolygons.append(selectedLabels[0])
                             voronoi_polygons_list.append(outline)
                     except RecursionError:
-                        print("There was an Infinite Recursion Error!")
+                        # print("There was an Infinite Recursion Error!")
                         clustersPolygons.append(selectedLabels[0])
                         outline = Polygon(vorAll.vertices[region])
                         voronoi_polygons_list.append(outline)

@@ -53,7 +53,7 @@ for (neighborhood in neighborhoods){
 cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 
-palette <- colorFactor(palette = "Set1", domain = unique(planes_merged_sf$cluster))
+palette <- colorNumeric(palette = c("red", "green"), domain = planes_merged_sf$silhouette)
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
@@ -67,11 +67,11 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
   )%>%
   
   addPolygons(
-    fillColor = ~ palette(cluster),
+    fillColor = ~ palette(silhouette),
     opacity = 1,
     stroke = TRUE,
     color = "black",
-    fillOpacity = 0.9,           # Adjust the fill opacity for better visibility
+    fillOpacity = 1,           # Adjust the fill opacity for better visibility
     weight = 1,                 # Set outline thickness
     label = ~cluster,
   ) %>%
@@ -80,5 +80,9 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
   addScaleBar()
 
 map2
+library(leaflet)
+library(leafsync)
+library(htmltools)
+library(htmlwidgets)
 saveWidget(map2, file="m.html")
 # 

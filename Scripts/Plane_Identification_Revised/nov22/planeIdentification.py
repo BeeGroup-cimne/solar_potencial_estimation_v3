@@ -139,6 +139,7 @@ class PlanesCluster():
 
     def fit(self, X):
         best_score = -np.inf
+        best_inliers_n = 0
         best_labels = []    
         best_planes = []
 
@@ -268,7 +269,7 @@ class GradientCluster():
             sum_dz_dy = np.sum(delta_z[valid_dy] / delta_y[valid_dy])
             
             # Store the gradient
-            gradients[i] = [sum_dz_dx, sum_dz_dy]
+            gradients[i] = [sum_dz_dx/len(valid_dx), sum_dz_dy/len(valid_dx)]
         
         return gradients
 
@@ -329,7 +330,7 @@ class PlaneExtraction():
             # Compute distances and find inliers
             distances = abs(X[:,2] - plane.predict(X[:,0:2]))
             a, b, c, d = plane.coef_[0], plane.coef_[1], -1, plane.intercept_
-            distances = np.abs(a * X[:, 0] + b * X[:, 1] + c * X[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
+            # distances = np.abs(a * X[:, 0] + b * X[:, 1] + c * X[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
             mask = (distances < self.inlierThreshold) & np.isin(np.arange(len(X)), selectableIndices)
             inliers = X[mask]
 

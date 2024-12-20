@@ -4,7 +4,7 @@ library(leafsync)
 library(htmltools)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
-neighborhoods <- c("70_el Besòs i el Maresme")
+neighborhoods <- c("Test_70_el Besòs i el Maresme")
 
 
 re_sf_list <- list()
@@ -49,7 +49,7 @@ map1 <-leaflet(merged_sf, options = leafletOptions(maxZoom = 20)) %>%
 cadaster_sf_list <- list()
 planes_sf_list <- list()
 
-searchPath <- "/Plane Processing/No Overlaps/Geopackages/"
+searchPath <- "/Plane Identification/"
 for (neighborhood in neighborhoods){
   parcels <- list.files(path = paste(base_folder, neighborhood, "/Parcels/", sep=""))
   # parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
@@ -68,7 +68,12 @@ for (neighborhood in neighborhoods){
     # cadaster_sf_list <- c(cadaster_sf_list, partial_cadaster_sf_list)
     
     for (construction in constructions){
-      planes <- list.files(path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), recursive = FALSE, full.names = FALSE)
+      planes <- list.files(
+        path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), 
+        recursive = FALSE, 
+        full.names = FALSE, 
+        pattern = "\\.gpkg$"
+      )
       if(length(planes) > 0){
         gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath, planes)
         partial_planes_sf_list <- lapply(gpkg_files, function(file) {
@@ -88,17 +93,18 @@ for (neighborhood in neighborhoods){
 # cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 
-palette <- colorFactor(palette = "Set3", domain = unique(planes_merged_sf$plane))
+library(RColorBrewer)
+palette <- colorFactor(palette = brewer.pal(12, "Set3"), domain = unique(planes_merged_sf$cluster))
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addPolygons(
-    fillColor = ~ palette(plane),
+    fillColor = ~ palette(cluster),
     opacity = 1,
     stroke = TRUE,
     color = "black",
-    fillOpacity = 0.5,           # Adjust the fill opacity for better visibility
-    weight = 1                 # Set outline thickness
+    fillOpacity = 1,           # Adjust the fill opacity for better visibility
+    weight = 4                 # Set outline thickness
   ) %>%
   # addPolygons(data = cadaster_merged_sf,
   #             weight = 4,
@@ -109,6 +115,7 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   #             label = ~paste(REFCAT, construction, CONSTRU, sep=". ")) %>%
   addScaleBar()
 
+map2
 ###############################################################################################
 
 
@@ -122,7 +129,7 @@ sync_map <- browsable(tagList(
   sync(map1, map2)
 ))
 
-# Save the synchronized map as an HTML file
-htmltools::save_html(sync_map, "synchronized_map.html")
+# !!!!! You need to save the hmlt "by hand". Display sync_map on the viewer and then Export > Save as Web Page
 
-saveWidget(sync_map, "synchronized_map.html")
+# library(plotly)
+# saveWidget(as_widget(sync_map), "synchronized_map.html")

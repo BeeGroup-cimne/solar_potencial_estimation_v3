@@ -38,7 +38,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
 
         pipeline = ClusterPipeline([
             HeightSplit(distance_threshold = 0.45),  # First clustering stage
-            PlaneExtraction(inlierThreshold=0.15, num_iterations=50),
+            PlaneExtraction(inlierThreshold=0.3, num_iterations=200),
         ])
 
         pipeline.fit(lasDF.xyz)
