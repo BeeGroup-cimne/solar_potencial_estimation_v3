@@ -94,12 +94,12 @@ for (neighborhood in neighborhoods){
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 
 library(RColorBrewer)
-palette <- colorFactor(palette = brewer.pal(12, "Set3"), domain = unique(planes_merged_sf$cluster))
+palette <- colorNumeric(palette = c("red", "green"), domain = planes_merged_sf$silhouette)
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addPolygons(
-    fillColor = ~ palette(cluster),
+    fillColor = ~ palette(silhouette),
     opacity = 1,
     stroke = TRUE,
     color = "black",
@@ -128,7 +128,7 @@ sync_map <- browsable(tagList(
     ")),
   sync(map1, map2)
 ))
-
+sync_map
 # !!!!! You need to save the hmlt "by hand". Display sync_map on the viewer and then Export > Save as Web Page
 
 # library(plotly)

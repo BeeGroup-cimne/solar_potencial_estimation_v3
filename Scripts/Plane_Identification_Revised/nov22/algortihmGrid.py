@@ -35,13 +35,13 @@ params2 = [{"distance_threshold":[0.5]},
                 "inlierThreshold":[0.01, 0.05, 0.10, 0.15, 0.3, np.inf],
                 "num_iterations": [5, 10, 20, 50]
             }]
-# params3 = [{"distance_threshold":[0.5]}, 
-#             {
-#                 "squareSize":[0.5, 1],
-#                 "polar": [True, False],
-#                 # "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
-#                 # "DBSCANminSamples": [4, 8, 12]
-#             }]
+params3 = [{"distance_threshold":[0.5]}, 
+            {
+                "squareSize":[0.5, 1, 2],
+                "polar": [True, False],
+                # "DBSCANeps": [0.1, 0.25, 0.5, 1, 1.5, 2],
+                # "DBSCANminSamples": [4, 8, 12]
+            }]
 params4 = [{"distance_threshold":[0.5]}, 
             {
                 "squareSize":[0.5, 1],
@@ -65,14 +65,14 @@ algorithms =[
             #   "alg": [HeightSplit, PlaneExtraction], 
             #   "parameters": [params1[i].keys() for i in range(len(params1))], 
             #   "values": [[params1[i][key] for key in params1[i].keys()]  for i in range(len(params1))]},
-            {"name":"KPlanes", 
-              "alg": [HeightSplit, PlanesCluster], 
-              "parameters": [params2[i].keys() for i in range(len(params2))], 
-              "values": [[params2[i][key] for key in params2[i].keys()]  for i in range(len(params2))]},
-            #   {"name":"GradientHDBSCAN", 
-            #   "alg": [HeightSplit, GradientCluster], 
-            #   "parameters": [params3[i].keys() for i in range(len(params3))], 
-            #   "values": [[params3[i][key] for key in params3[i].keys()]  for i in range(len(params3))]}
+            # {"name":"KPlanes", 
+            #   "alg": [HeightSplit, PlanesCluster], 
+            #   "parameters": [params2[i].keys() for i in range(len(params2))], 
+            #   "values": [[params2[i][key] for key in params2[i].keys()]  for i in range(len(params2))]},
+              {"name":"GradientHDBSCAN", 
+              "alg": [HeightSplit, GradientCluster], 
+              "parameters": [params3[i].keys() for i in range(len(params3))], 
+              "values": [[params3[i][key] for key in params3[i].keys()]  for i in range(len(params3))]}
             #    {"name":"GradientDoubleHDBSCAN", 
             #   "alg": [HeightSplit, GradientCluster, PlaneExtraction], #"alg": [HeightSplit, GradientCluster, DBSCAN] 
             #   "parameters": [params4[i].keys() for i in range(len(params4))], 

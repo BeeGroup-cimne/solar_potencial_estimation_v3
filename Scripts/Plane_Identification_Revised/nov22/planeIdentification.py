@@ -254,8 +254,7 @@ class GradientCluster():
     def computeGradients(self, X):
         gradients = np.zeros((X.shape[0], 2))
         for i, (x, y, z) in enumerate(X):
-            neighbors = X[ (np.abs(X[:, 0] - x) <= self.squareSize/2) & (np.abs(X[:, 1] - self.squareSize/2) <= 0.5)
-            ]
+            neighbors = X[(np.abs(X[:, 0] - x) <= self.squareSize/2) & (np.abs(X[:, 1] - y) <= self.squareSize/2)]
             
             delta_x = neighbors[:, 0] - x
             delta_y = neighbors[:, 1] - y
