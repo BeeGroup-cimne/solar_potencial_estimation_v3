@@ -90,8 +90,13 @@ basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_esti
 neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 baseOutputFolder = basePath + "/Results/" + neighborhood + "/Testing Plane ID_2/"
-        
-for algorithm in tqdm(os.listdir(baseOutputFolder), desc = "Testing each algorithm"):
+
+
+mask = "GradientHDBSCAN_distance_threshold"
+files = os.listdir(baseOutputFolder)
+selected_files = [file for file in files if file.startswith(mask)]
+
+for algorithm in tqdm(selected_files, desc = "Testing each algorithm"):
     experimentFolder = baseOutputFolder + algorithm + "/"
     for parcel in tqdm([x for x in os.listdir(experimentFolder) if os.path.isdir(experimentFolder + x)], desc="Looping through parcels", leave=False):
         parcelSubfolder = experimentFolder + parcel + "/"
