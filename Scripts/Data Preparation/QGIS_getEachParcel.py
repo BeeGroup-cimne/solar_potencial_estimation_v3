@@ -34,7 +34,9 @@ def getEachParcel(mapPath, buildingsFolder):
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "7_P.I. Can Petit"
 
 mapPath = basePath + "Results/" + neighborhood + "/" + neighborhood + "_PARCELS.gpkg"
+mapPath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/7_P.I. Can Petit/7_P.I. Can Petit_PARCELS.gpkg"
 buildingsFolder = basePath + "Results/" + neighborhood + "/Parcels"
 getEachParcel(mapPath, buildingsFolder)

@@ -28,6 +28,7 @@ def getLidarConstructions(parcelFolder):
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "7_P.I. Can Petit"
 parcelFolder = basePath + "Results/" + neighborhood + "/Parcels/"
 getLidarConstructions(parcelFolder)
 

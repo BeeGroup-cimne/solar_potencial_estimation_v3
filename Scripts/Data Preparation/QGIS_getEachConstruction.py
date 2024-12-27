@@ -53,6 +53,7 @@ def getEachConstruction(constructionMapPath, parcelsFolder):
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "7_P.I. Can Petit"
 
 constructionMapPath = basePath + "Results/" + neighborhood + "/" + neighborhood + "_CONSTRUCTIONS_FILTERED.gpkg"
 parcelsFolder = basePath + "Results/" + neighborhood + "/Parcels/"

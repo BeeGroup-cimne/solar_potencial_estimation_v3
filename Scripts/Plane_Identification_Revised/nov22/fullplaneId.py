@@ -22,12 +22,16 @@ def create_output_folder(directory, deleteFolder = False):
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "7_P.I. Can Petit"
+# neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+for parcel in tqdm(os.listdir(parcelsFolder)[3:], desc="Looping through parcels"):
+
     # print(parcel)
     parcelSubfolder = parcelsFolder + parcel + "/"
     for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+        # print(construction)
         constructionFolder = parcelSubfolder + construction
         create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
 
@@ -35,39 +39,17 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
         lasDF = laspy.read(lasPath)
         gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
         cadasterGDF = gpd.read_file(gpkgFile)
+        try:
+            pipeline = ClusterPipeline([
+                HeightSplit(distance_threshold = 0.45),  # First clustering stage
+                PlaneExtraction(inlierThreshold=0.3, num_iterations=200),
+            ])
+            pipeline.fit(lasDF.xyz)
 
-        pipeline = ClusterPipeline([
-            HeightSplit(distance_threshold = 0.45),  # First clustering stage
-            PlaneExtraction(inlierThreshold=0.3, num_iterations=200),
-        ])
+        except:
+            print(" ", parcel, construction, " ")
 
-        pipeline.fit(lasDF.xyz)
         lasDF.classification  = pipeline.final_labels
 
         lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
-
-        # plt.scatter(lasDF.x, lasDF.y, c=labels)
-        # plt.show()
-        # vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
-            
-        # pipeline.getAllPlanes(lasDF.xyz)
-        # #Z = Ax+By+D, but D in planeLists is negative, so we need to multiply by -1
-        # A_list = []
-        # B_list = []
-        # D_list = []
-
-        # for idx, planeParams in enumerate(pipeline.planes):
-        #     if idx in vorClipped.cluster:
-        #         A_list.append(planeParams.coef_[0])
-        #         B_list.append(planeParams.coef_[1])
-        #         D_list.append(planeParams.intercept_)
-     
-        # vorClipped = vorClipped[vorClipped.cluster != -1]
-        # vorClipped = vorClipped[vorClipped.geometry != None] 
-        
-        # vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")
-
-        # vorClipped.plot(edgecolor='black', column="cluster", alpha=0.5, legend=True)
-        # plt.show()
-        
-        
+    

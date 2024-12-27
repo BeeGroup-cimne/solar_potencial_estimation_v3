@@ -9,6 +9,8 @@ import geopandas as gpd
 import math
 import shutil 
 from tqdm import tqdm
+from itertools import accumulate
+
 
 def create_output_folder(directory, deleteFolder = False):
     if not(os.path.isdir(directory)):
@@ -64,13 +66,13 @@ def getInfoRoof(plane):
     return  area, tilt, azimuth
 
 
-def runPySAMSimulation(file_names, tilts, plane, tmyfile):
+def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
     pv, grid = loadModules(file_names)
     shadingMatrix = get_matrix(tilts)
 
     area, tilt, azimuth = getInfoRoof(plane)
     
-    ratio=float(0.450/2)
+    ratio=0.400/(1.879*1.045)
 
     modifiedParams = {"shading_azal": shadingMatrix,
         "system_capacity": area*ratio, #*self.pv.value("gcr"), #We don't need the area by the ground coverage ratio
@@ -86,12 +88,31 @@ def runPySAMSimulation(file_names, tilts, plane, tmyfile):
     for m in modules:
         m.execute()
 
-    generation = pv.export()["Outputs"]["ac"]
-    generation = np.array(generation).reshape(365, 24)
-    generation_df = pd.DataFrame(generation)
-    
-    return generation_df/area
+    if(returnType=="AC"):
+        generation = pv.export()["Outputs"]["ac"]
+        generation = np.array(generation).reshape(365, 24)
+        generation_df = pd.DataFrame(generation)
+        generation_df = generation_df/area
+        annual_ac = generation_df.sum().sum() 
+        return annual_ac
+    elif(returnType=="POA"):
+        return sum(pv.export()["Outputs"]["poa_monthly"])
 
+    if(returnType=="DC"):
+        days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        cumulative_sum = list(accumulate(days))
+        DCOut = np.array(pv.export()["Outputs"]["dc"]).reshape(365, 24)/area
+        averages = np.zeros((12,24))
+        for month in range(12):
+            for hour in range(24):
+                averages[month,hour] = np.average(DCOut[cumulative_sum[month]:cumulative_sum[month+1],hour])
+        averages = averages.reshape(12*24)
+        averages = ','.join(map("{:.6f}".format, annual))
+        return averages
+    
+    if(returnType=="DC_Year"):
+        DCOut = np.array(pv.export()["Outputs"]["dc"])
+        return np.sum(DCOut)/area
 
 file_names = ["/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/sunEstimation/pysam_template_pvwattsv8.json",
     "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/sunEstimation/pysam_template_grid.json"]
@@ -105,33 +126,33 @@ parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 annual_ac = 0
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
-    parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-        constructionFolder = parcelSubfolder + construction + "/"
-        solarFolder = constructionFolder + "Solar Estimation PySAM/"
-        create_output_folder(solarFolder, deleteFolder=True)
+    # if(parcel == "4054901DF3845C"):   
+        parcelSubfolder = parcelsFolder + parcel + "/"
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+            # if(construction == "408"):
+                constructionFolder = parcelSubfolder + construction + "/"
+                solarFolder = constructionFolder + "Solar Estimation PySAM/"
+                create_output_folder(solarFolder, deleteFolder=True)
 
-        planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
-        for cluster in tqdm(planesGDF.cluster.values, desc="Clusters", leave=False):
-            shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
-            plane = planesGDF[planesGDF.cluster == cluster]
-            point_list = []
-            annual_ac_list = []
-            if os.path.isfile(shadingFile):
-                if(os.stat(shadingFile).st_size > 0):
-                    shadingProfilesDF = pd.read_csv(shadingFile, header=None)
-                    for i in tqdm(range(len(shadingProfilesDF)), desc="Sampled points", leave=False):
-                        coords = shadingProfilesDF.iloc[i][0:3]
-                        tilts = shadingProfilesDF.iloc[i][3:363]
+                planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
+                for cluster in tqdm(planesGDF.cluster.values, desc="Clusters", leave=False):
+                    shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
+                    plane = planesGDF[planesGDF.cluster == cluster]
+                    point_list = []
+                    annual_list = []
+                    if os.path.isfile(shadingFile):
+                        if(os.stat(shadingFile).st_size > 0):
+                            shadingProfilesDF = pd.read_csv(shadingFile, header=None)
+                            for i in tqdm(range(len(shadingProfilesDF)), desc="Sampled points", leave=False):
+                                coords = shadingProfilesDF.iloc[i][0:3]
+                                tilts = shadingProfilesDF.iloc[i][3:363]
 
-                        generation_df = runPySAMSimulation(file_names, tilts, plane, tmyfile)
-                        annual_ac = generation_df.sum().sum() 
+                                annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "DC_Year")
+                                point_list.append(coords)
+                                annual_list.append(annual)
 
-                        point_list.append(coords)
-                        annual_ac_list.append(annual_ac)
-
-            solarDF = pd.DataFrame({"x": [point[0] for point in point_list], 
-                                    "y": [point[1] for point in point_list], 
-                                    "z": [point[2] for point in point_list], 
-                                    "annualAC": annual_ac_list})
-            solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       
+                    solarDF = pd.DataFrame({"x": [point[0] for point in point_list], 
+                                            "y": [point[1] for point in point_list], 
+                                            "z": [point[2] for point in point_list], 
+                                            "annual": annual_list})
+                    solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       

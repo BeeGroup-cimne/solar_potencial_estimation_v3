@@ -107,6 +107,9 @@ def get_shading_profile(point, X, Y, Z):
 
 previousFileList = []
 for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave=True):
+    parcel = selectedParcels.REFCAT[i]
+    # if(parcel == "4054901DF3845C"):
+
     if(not np.array_equal(previousFileList, selectedParcels.files[i])):
         lasCoords = load_necessary_laz(lidarFolder, selectedParcels.files[i])
         previousFileList = selectedParcels.files[i]
@@ -116,10 +119,11 @@ for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave
 
     X, Y, Z = getGrid(selectedCoords)
 
-    parcel = selectedParcels.REFCAT[i]
+    
     parcelSubfolder = parcelsFolder + parcel + "/"
 
     for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+        # if(construction == "408"):
         constructionFolder = parcelSubfolder + construction
         
         constructionFile = constructionFolder + "/Plane Identification/"+ construction+".gpkg"

@@ -2,9 +2,15 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(leaflet)
 library(leafsync)
 library(htmltools)
+library(dplyr)
+library(RColorBrewer)
+library(sf)
+library(leaflet.extras)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
+neighborhoods <- c("70_el Besòs i el Maresme")
+neighborhoods <- c("7_P.I. Can Petit")
 
 
 re_sf_list <- list()
@@ -104,7 +110,7 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
     stroke = TRUE,
     color = "black",
     fillOpacity = 1,           # Adjust the fill opacity for better visibility
-    weight = 4                 # Set outline thickness
+    weight = 1                 # Set outline thickness
   ) %>%
   # addPolygons(data = cadaster_merged_sf,
   #             weight = 4,

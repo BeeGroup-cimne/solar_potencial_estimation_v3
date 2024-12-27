@@ -12,5 +12,6 @@ def deleteEmptyParcels(directory):
 if __name__ == "__main__":
     basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
     neighborhood = "70_el Besòs i el Maresme"
+    neighborhood = "7_P.I. Can Petit"
     directory = basePath + "Results/" + neighborhood + "/Parcels/"
     deleteEmptyParcels(directory)

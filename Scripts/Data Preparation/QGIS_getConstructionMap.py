@@ -41,9 +41,14 @@ def getConstructionMap(neighborhoodPath, cadasterPath, outputResults, filterStri
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "7_P.I. Can Petit"
 
 neighborhoodPath = basePath + "Results/Neighborhoods/" + neighborhood + ".gpkg"
+neighborhoodPath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/7_P.I. Can Petit/7_P.I. Can Petit_NEIGHBORHOOD.gpkg"
+
 cadasterPath = basePath + "Data/Cadaster/08900uA_8569_19012024_CONSTRU.ZIP"
+cadasterPath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/Solar Estimation v3 - Terrassa/Data/Catastro/08279uA 8453 TERRASSA/08279uA_8453_19012024_CONSTRU.ZIP"
+
 outputResults = basePath + "Results/" + neighborhood + "/" + neighborhood + "_CONSTRUCTIONS"
 filterString = "( ((CONSTRU LIKE '%I%') AND (CONSTRU NOT LIKE '%PI%') AND (CONSTRU NOT LIKE '%CAMPING%') AND (CONSTRU NOT LIKE '%RUINA%') AND (CONSTRU NOT LIKE '%SILO%')) OR ((CONSTRU LIKE '%V%') AND (CONSTRU NOT LIKE '%VOL%') AND (CONSTRU NOT LIKE '%ZPAV%')) OR (CONSTRU LIKE '%X%') ) AND ((CONSTRU NOT LIKE '%-%') OR (CONSTRU LIKE '%+I%') OR (CONSTRU LIKE '%+V%') OR (CONSTRU LIKE '%+X%'))"
 getConstructionMap(neighborhoodPath, cadasterPath, outputResults, filterString)
