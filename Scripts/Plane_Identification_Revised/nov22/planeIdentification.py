@@ -243,13 +243,10 @@ class PlanesCluster():
         pass
 
 class GradientCluster():
-    def __init__(self, squareSize=1, polar=True, scaleFactorMagnitude=1, scaleFactorAngle=1, DBSCANeps=1, DBSCANminSamples=8):
+    def __init__(self, squareSize=1, polar=True, minClusterSize=4):
         self.squareSize = squareSize
         self.polar = polar
-        self.scaleFactorMagnitude = scaleFactorMagnitude
-        self.scaleFactorAngle = scaleFactorAngle
-        self.DBSCANeps = DBSCANeps
-        self.DBSCANminSamples = DBSCANminSamples
+        self.minClusterSize = minClusterSize
 
     def computeGradients(self, X):
         gradients = np.zeros((X.shape[0], 2))
@@ -274,20 +271,24 @@ class GradientCluster():
 
     def fit(self, X):
         # cluster_alg = DBSCAN(eps=self.DBSCANeps, min_samples=self.DBSCANminSamples)
-        cluster_alg = HDBSCAN()
-        
-        gradients = self.computeGradients(X)
-        if(self.polar):
-            polar_gradients = np.zeros(gradients.shape)
-            polar_gradients[:, 0] = np.sqrt(gradients[:, 0]**2 + gradients[:, 1]**2)
-            polar_gradients[:, 1] = np.arctan2(gradients[:, 1], gradients[:, 0])*180/math.pi
-
-            cluster_alg.fit(polar_gradients)
+        if(len(X) < self.minClusterSize):
+            self.labels_ = np.full(len(X) , -1)
+            return self
         else:
-            cluster_alg.fit(gradients)
- 
-        self.labels_ = cluster_alg.labels_
-        return self
+            cluster_alg = HDBSCAN(min_cluster_size=self.minClusterSize)
+            
+            gradients = self.computeGradients(X)
+            if(self.polar):
+                polar_gradients = np.zeros(gradients.shape)
+                polar_gradients[:, 0] = np.sqrt(gradients[:, 0]**2 + gradients[:, 1]**2)
+                polar_gradients[:, 1] = np.arctan2(gradients[:, 1], gradients[:, 0])*180/math.pi
+
+                cluster_alg.fit(polar_gradients)
+            else:
+                cluster_alg.fit(gradients)
+    
+            self.labels_ = cluster_alg.labels_
+            return self
     
 class PlaneExtraction():
     def __init__(self, inlierThreshold=0.15, useDistanceSampling=True, num_iterations = 20, iterationsToConverge=10, maxPlanes = 20):

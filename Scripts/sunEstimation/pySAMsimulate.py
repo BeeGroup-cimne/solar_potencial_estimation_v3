@@ -39,6 +39,8 @@ def loadModules(file_names):
 def get_matrix(tilts):
     tilts = tilts.round()
     angles = np.unique(tilts)
+    angles = np.arange(1, 90)
+
     azimuths = np.arange(0, 360, 1)
 
     matrix = []
@@ -69,6 +71,7 @@ def getInfoRoof(plane):
 def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
     pv, grid = loadModules(file_names)
     shadingMatrix = get_matrix(tilts)
+    print(shadingMatrix)
 
     area, tilt, azimuth = getInfoRoof(plane)
     
@@ -95,10 +98,12 @@ def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
         generation_df = generation_df/area
         annual_ac = generation_df.sum().sum() 
         return annual_ac
-    elif(returnType=="POA"):
+    elif(returnType=="POA_m"):
+        return sum(pv.export()["Outputs"]["poa_monthly"])
+    elif(returnType=="POA_Y"):
         return sum(pv.export()["Outputs"]["poa_monthly"])
 
-    if(returnType=="DC"):
+    elif(returnType=="DC"):
         days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         cumulative_sum = list(accumulate(days))
         DCOut = np.array(pv.export()["Outputs"]["dc"]).reshape(365, 24)/area
@@ -110,7 +115,7 @@ def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
         averages = ','.join(map("{:.6f}".format, annual))
         return averages
     
-    if(returnType=="DC_Year"):
+    elif(returnType=="DC_Year"):
         DCOut = np.array(pv.export()["Outputs"]["dc"])
         return np.sum(DCOut)/area
 
@@ -131,7 +136,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
             # if(construction == "408"):
                 constructionFolder = parcelSubfolder + construction + "/"
-                solarFolder = constructionFolder + "Solar Estimation PySAM/"
+                solarFolder = constructionFolder + "Solar Estimation PySAM_POA_Yearly/"
                 create_output_folder(solarFolder, deleteFolder=True)
 
                 planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
@@ -147,7 +152,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                                 coords = shadingProfilesDF.iloc[i][0:3]
                                 tilts = shadingProfilesDF.iloc[i][3:363]
 
-                                annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "DC_Year")
+                                annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "POA_Y")
                                 point_list.append(coords)
                                 annual_list.append(annual)
 

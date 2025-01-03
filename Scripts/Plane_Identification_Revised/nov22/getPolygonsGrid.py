@@ -92,7 +92,7 @@ parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 baseOutputFolder = basePath + "/Results/" + neighborhood + "/Testing Plane ID_2/"
 
 
-mask = "GradientHDBSCAN_distance_threshold"
+mask = "KPlanes"
 files = os.listdir(baseOutputFolder)
 selected_files = [file for file in files if file.startswith(mask)]
 

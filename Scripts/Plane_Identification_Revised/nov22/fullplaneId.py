@@ -23,11 +23,10 @@ def create_output_folder(directory, deleteFolder = False):
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
 neighborhood = "7_P.I. Can Petit"
-# neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-for parcel in tqdm(os.listdir(parcelsFolder)[3:], desc="Looping through parcels"):
-
+for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
     # print(parcel)
     parcelSubfolder = parcelsFolder + parcel + "/"
     for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):

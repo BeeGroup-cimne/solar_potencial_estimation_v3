@@ -9,7 +9,7 @@ import shutil
 import os
 import time
 import itertools
-import tqdm
+from tqdm import tqdm
 import laspy
 import geopandas as gpd
 
@@ -18,7 +18,36 @@ neighborhood = "Test_70_el Besòs i el Maresme"
 
 baseOutputFolder = basePath + "/Results/" + neighborhood + "/Testing Plane ID_2/"
 
-for experiment in tqdm.tqdm(os.listdir(baseOutputFolder)):
+mask = "GradientHDBSCAN"
+files = os.listdir(baseOutputFolder)
+selected_files = [file for file in files if file.startswith(mask)]
+selected_files = files
+
+def compute_silhouette(distances, cluster, labels):
+
+    minIndexes = np.argmin(distances, axis=1)
+    a = distances.min(axis=1)
+    
+    outerDistances = []
+    
+    for i, row in enumerate(distances):
+        ignore_index = minIndexes[i]
+        masked_row = np.delete(row, ignore_index)
+        min_value = np.min(masked_row)
+        outerDistances.append(min_value)
+
+    b = np.array(outerDistances)
+    diffTerm = b-a
+    maxTerm = np.maximum(b, a)
+    individual_silhouette = diffTerm/maxTerm
+
+    mask = np.where(labels == cluster)[0]
+    inClusterSilhouette = individual_silhouette[mask]
+    silhouetteScore = 1/len(inClusterSilhouette)*np.sum(inClusterSilhouette)
+
+    return silhouetteScore
+
+for experiment in tqdm(selected_files, desc = "Testing each algorithm"):
     parcelsFolder = baseOutputFolder + experiment + "/"
 
     parcelList = []
@@ -45,7 +74,7 @@ for experiment in tqdm.tqdm(os.listdir(baseOutputFolder)):
             y = lasDF.y
             z = lasDF.z
             classification = lasDF.classification
-            mask = np.isin(classification, clusters)
+            mask = (np.isin(classification, clusters)) & (classification != 255) & (classification != -1)
 
             # x_filtered = x[mask]
             # y_filtered = y[mask]
@@ -79,8 +108,7 @@ for experiment in tqdm.tqdm(os.listdir(baseOutputFolder)):
                     
                 # Get RMSE
                 inlierDistance = distances.min(axis=1)
-                rmse = root_mean_squared_error(np.zeros(len(inlierDistance)), inlierDistance)
-
+                rmse = np.mean(inlierDistance)
                 # Get Silhouette score
                 minIndexes = np.argmin(distances, axis=1)
                 a = distances.min(axis=1)
@@ -98,46 +126,9 @@ for experiment in tqdm.tqdm(os.listdir(baseOutputFolder)):
                     diffTerm = b-a
                     maxTerm = np.maximum(b, a)
                     individual_silhouette = diffTerm/maxTerm
-                    silhouetteScore = 1/len(points)*np.sum(individual_silhouette)
+                    silhouetteScore = 1/len(points[mask])*np.sum(individual_silhouette)
                 else:
                     silhouetteScore = 1
-
-                # # Get planes
-                # planes = []
-                # for i in np.unique(classification[classification != -1]):
-                #     planePoints = points[np.where(classification == i), :][0]
-                #     planes.append(LinearRegression().fit(planePoints[:,0:2], planePoints[:,2]))
-
-                # # Get distances
-                # distances = np.zeros((points.shape[0], len(planes)))
-                # for plane_idx in range(len(planes)):
-                #     distances[:, plane_idx] = abs(points[:,2] - planes[plane_idx].predict(points[:,0:2]))
-
-                # # Get RMSE
-                # inlierDistance = distances.min(axis=1)
-                # inlierDistance = inlierDistance[np.where(classification != -1)]
-                # rmse = root_mean_squared_error(np.zeros(len(inlierDistance)), inlierDistance)
-
-                # # Get Silhouette score
-                # if(len(np.unique(classification[classification != -1])) == 1):
-                #     silhouetteScore = 0
-                # else:
-                #     minIndexes = np.argmin(distances, axis=1)
-                #     a = distances.min(axis=1)
-                    
-                #     outerDistances = []
-                #     for i, row in enumerate(distances):
-                #         ignore_index = minIndexes[i]
-                #         masked_row = np.delete(row, ignore_index)
-                #         min_value = np.min(masked_row)
-                #         outerDistances.append(min_value)
-
-                #     b = np.array(outerDistances)
-                #     diffTerm = b-a
-                #     maxTerm = np.maximum(b, a)
-                #     individual_silhouette = diffTerm/maxTerm
-                #     silhouetteScore = 1/len(points)*np.sum(individual_silhouette)
-
 
                 # Store results
                 parcelList.append(parcel)

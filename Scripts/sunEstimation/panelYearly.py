@@ -26,10 +26,11 @@ neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
-    if(parcel == "4054901DF3845C"): 
+    # if(parcel == "4054901DF3845C"): 
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-            if(construction == "408"):
+            # if(construction == "408"):
+            try:
                 constructionFolder = parcelSubfolder + construction + "/"
                 solarFolder = constructionFolder + "Solar Estimation Panels Simulated/"
                 create_output_folder(solarFolder, deleteFolder=True)
@@ -54,7 +55,8 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                         panel = panels.iloc[panelID].geometry
 
                         allSunDC["inside_panel"] = allSunDC.apply(lambda row: panel.contains(Point(row["x"], row["y"])), axis=1)
-
+                        if(len(allSunDC[allSunDC["inside_panel"]]) == 0):
+                            print("No shading in", parcel, construction)
                         # Filter points inside the panel and calculate the average annual
                         average_annual = allSunDC[allSunDC["inside_panel"]]["annual"].mean()
                         yearlyList.append(average_annual)
@@ -62,3 +64,5 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
 
                 combined_gdf = gpd.GeoDataFrame(pd.concat(panelsGDFs, ignore_index=True))
                 combined_gdf.to_file(solarFolder + construction + ".gpkg")
+            except:
+                print(" ", parcel, construction, " ")

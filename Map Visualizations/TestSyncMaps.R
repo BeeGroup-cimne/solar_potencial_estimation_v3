@@ -1,4 +1,4 @@
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(leaflet)
 library(leafsync)
 library(htmltools)
@@ -6,11 +6,12 @@ library(dplyr)
 library(RColorBrewer)
 library(sf)
 library(leaflet.extras)
+library(htmlwidgets)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
 neighborhoods <- c("70_el Besòs i el Maresme")
-neighborhoods <- c("7_P.I. Can Petit")
+# neighborhoods <- c("7_P.I. Can Petit")
 
 
 re_sf_list <- list()
@@ -121,7 +122,7 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   #             label = ~paste(REFCAT, construction, CONSTRU, sep=". ")) %>%
   addScaleBar()
 
-map2
+# map2
 ###############################################################################################
 
 
@@ -137,5 +138,16 @@ sync_map <- browsable(tagList(
 sync_map
 # !!!!! You need to save the hmlt "by hand". Display sync_map on the viewer and then Export > Save as Web Page
 
-# library(plotly)
+library(plotly)
 # saveWidget(as_widget(sync_map), "synchronized_map.html")
+
+
+# install.packages("servr")
+library(servr)
+# Save the map to an HTML file
+html_file <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Map Visualizations/remoteSync.html"
+saveWidget(map2, file = html_file, selfcontained = TRUE)
+
+# Serve the map using servr and print the port
+# server <- servr::httd(dir = dirname(html_file), browse = FALSE)
+# cat("Server running at:", server$url, "\n")

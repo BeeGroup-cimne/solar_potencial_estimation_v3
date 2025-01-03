@@ -115,7 +115,7 @@ def compute_silhouette(distances, cluster, labels):
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
 neighborhood = "7_P.I. Can Petit"
-# neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 

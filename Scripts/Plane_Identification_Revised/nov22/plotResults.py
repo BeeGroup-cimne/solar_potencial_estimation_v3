@@ -8,6 +8,10 @@ import geopandas as gpd
 base_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/"
 base_export_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane Information/V2/Images/"
 
+mask = "GradientHDBSCAN"
+files = os.listdir(base_path)
+selected_files = [file for file in files if file.startswith(mask)]
+
 for experiment in tqdm.tqdm(os.listdir(base_path)):
     fig, axes = plt.subplots(3, 3, figsize=(15, 15), dpi=200)
     axes = axes.flatten()
