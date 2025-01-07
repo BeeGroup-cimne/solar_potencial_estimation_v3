@@ -86,52 +86,54 @@ parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
     parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-        try:
-            constructionFolder = parcelSubfolder + construction + "/"
-            solarFolder = constructionFolder + "Solar Estimation Panels/"
-            create_output_folder(solarFolder, deleteFolder=True)
+    if(parcel == "4649601DF3844H"):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+            if(construction == "546"):
+                
+                    constructionFolder = parcelSubfolder + construction + "/"
+                    solarFolder = constructionFolder + "Solar Estimation Panels/"
+                    create_output_folder(solarFolder, deleteFolder=True)
 
-            planesFiles = constructionFolder + "Plane Identification/" + construction + ".gpkg"
-            planeGDF = gpd.read_file(planesFiles)
-
-            for i in range(len(planeGDF)):
-                row = planeGDF.iloc[i]
-
-                tilt = row.tilt
-                azimuth = row.azimuth
-                geom = row.geometry
-                centroid = geom.centroid
-            
-                if(tilt > 5): # Non-horizontal
-                    angle = azimuth
-                else: # Horizontal
-                    orientedBB = oriented_envelope(geom)
-                    coords = list(orientedBB.exterior.coords)
-                    p1, p2 = coords[0], coords[1]
-                    dx = p2[0] - p1[0]
-                    dy = p2[1] - p1[1]
-                    angle_radians = math.atan2(dy, dx)
-                    angle = math.degrees(angle_radians)
+                    planesFiles = constructionFolder + "Plane Identification/" + construction + ".gpkg"
+                    planeGDF = gpd.read_file(planesFiles)
     
+                    for i in range(len(planeGDF)):
+                        row = planeGDF.iloc[i]
+
+                        tilt = row.tilt
+                        azimuth = row.azimuth
+                        geom = row.geometry
+                        centroid = geom.centroid
+                    
+                        if(tilt > 5): # Non-horizontal
+                            angle = azimuth
+                        else: # Horizontal
+                            orientedBB = oriented_envelope(geom)
+                            coords = list(orientedBB.exterior.coords)
+                            p1, p2 = coords[0], coords[1]
+                            dx = p2[0] - p1[0]
+                            dy = p2[1] - p1[1]
+                            angle_radians = math.atan2(dy, dx)
+                            angle = math.degrees(angle_radians)
             
-                landscape_rotated = gpd.GeoSeries(geom).rotate(angle, origin=centroid)
-                landscape_grid, landscape_count = rect(landscape_rotated.geometry[0], tilt=tilt, include_poly=False)
+                        try:
+                            landscape_rotated = gpd.GeoSeries(geom).rotate(angle, origin=centroid)
+                            landscape_grid, landscape_count = rect(landscape_rotated.geometry[0], tilt=tilt, include_poly=False)
 
-                portrait_rotated = gpd.GeoSeries(geom).rotate(angle+90, origin=centroid)
-                portrait_grid, portrait_count = rect(landscape_rotated.geometry[0], tilt=tilt, include_poly=False)
+                            portrait_rotated = gpd.GeoSeries(geom).rotate(angle+90, origin=centroid)
+                            portrait_grid, portrait_count = rect(landscape_rotated.geometry[0], tilt=tilt, include_poly=False)
 
-                if(portrait_count > landscape_count):
-                    grid_r = portrait_grid.rotate(-angle-90, origin=centroid)
-                    count = portrait_count
+                            if(portrait_count > landscape_count):
+                                grid_r = portrait_grid.rotate(-angle-90, origin=centroid)
+                                count = portrait_count
 
-                else:
-                    grid_r = landscape_grid.rotate(-angle, origin=centroid)
-                    count = landscape_count
+                            else:
+                                grid_r = landscape_grid.rotate(-angle, origin=centroid)
+                                count = landscape_count
 
-                grid_r = gpd.GeoDataFrame(geometry=grid_r, crs=planeGDF.crs)
-                # grid_r["cluster"] = row.cluster
+                            grid_r = gpd.GeoDataFrame(geometry=grid_r, crs=planeGDF.crs)
+                            # grid_r["cluster"] = row.cluster
 
-                grid_r.to_file(solarFolder  + str(row.cluster) + ".gpkg")
-        except:
-            print(parcel, construction, row.cluster)
+                            grid_r.to_file(solarFolder  + str(row.cluster) + ".gpkg")
+                        except:
+                            print(parcel, construction, row.cluster)

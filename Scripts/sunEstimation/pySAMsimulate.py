@@ -71,7 +71,7 @@ def getInfoRoof(plane):
 def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
     pv, grid = loadModules(file_names)
     shadingMatrix = get_matrix(tilts)
-    print(shadingMatrix)
+    # print(shadingMatrix)
 
     area, tilt, azimuth = getInfoRoof(plane)
     

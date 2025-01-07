@@ -11,7 +11,7 @@ neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/planeExtract_distance_threshold_0.45__useDistanceSampling_True_inlierThreshold_0.3_num_iterations_50/"
-parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/KPlanes_distance_threshold_0.5__useDistanceSampling_True_inlierThreshold_0.15_num_iterations_50/"
+# parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/KPlanes_distance_threshold_0.5__useDistanceSampling_True_inlierThreshold_inf_num_iterations_20/"
 # parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/GradientHDBSCAN_distance_threshold_0.5__squareSize_2_polar_False_minClusterSize_12/"
 
 parcels = [parcel for parcel in os.listdir(parcelsFolder) if os.path.isdir(parcelsFolder + parcel)]
@@ -69,4 +69,4 @@ cbar.set_label("Silhouette Score")
 
 
 # Show the plot
-plt.savefig("/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/Plane_Identification_Revised/nov22/plotkPlanes2.png", dpi=300)
+plt.savefig("/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/Plane_Identification_Revised/nov22/plotResultsPlaneExtract.png", dpi=300)

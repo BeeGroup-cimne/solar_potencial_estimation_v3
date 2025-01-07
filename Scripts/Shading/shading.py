@@ -96,13 +96,13 @@ def get_shading_profile(point, X, Y, Z):
 
     tiltangle = np.zeros(X.shape)
     # # This can be further optimized by applying a mask on the azimuth, but that means that the angles need to be handled in case there is a missing orientation
-    mask = (azimuthAngle >= 60) & (azimuthAngle <= 300) & (Z >= Z_point)
-    distance = (X[mask] - point[0])**2 + (Y[mask] - point[1])**2
-    tiltangle[mask] = np.arctan2((Z[mask] - Z_point), distance) * 180 / math.pi
+    # mask = (azimuthAngle >= 60) & (azimuthAngle <= 300) & (Z >= Z_point)
+    # distance = (X[mask] - point[0])**2 + (Y[mask] - point[1])**2
+    # tiltangle[mask] = np.arctan2((Z[mask] - Z_point), distance) * 180 / math.pi
 
-    # distance = (X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2
-    # tiltangle = np.arctan2((Z[:,:] - Z_point), distance[:,:])*180/math.pi
-    # tiltangle = np.maximum(tiltangle, 0)
+    distance = (X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2
+    tiltangle = np.arctan2((Z[:,:] - Z_point), distance[:,:])*180/math.pi
+    tiltangle = np.maximum(tiltangle, 0)
 
     azimuthAngle_flat = azimuthAngle.ravel()
     tiltangle_flat = tiltangle.ravel()
@@ -119,7 +119,7 @@ def get_shading_profile(point, X, Y, Z):
 previousFileList = []
 for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave=True):
         parcel = selectedParcels.REFCAT[i]
-        # if(parcel == "4054901DF3845C"):
+    # if(parcel == "4157903DF3845E"):
 
         if(not np.array_equal(previousFileList, selectedParcels.files[i])):
             lasCoords = load_necessary_laz(lidarFolder, selectedParcels.files[i])
@@ -134,34 +134,34 @@ for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave
         parcelSubfolder = parcelsFolder + parcel + "/"
 
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=True):
-            # if(construction == "408"):
-            try:
-                constructionFolder = parcelSubfolder + construction
-                
-                constructionFile = constructionFolder + "/Plane Identification/"+ construction+".gpkg"
-                planesGDF = gpd.read_file(constructionFile)
-                lasFile = constructionFolder + "/Plane Identification/"+ construction +".laz"
-                lasDF = laspy.read(lasFile)
-                
-                create_output_folder(constructionFolder + "/Shading Optimized/", deleteFolder=True)
-                
-                for cluster in tqdm(planesGDF.cluster.values, desc="Doing all clusters", leave=False):
-                    geometry = planesGDF[planesGDF.cluster == cluster].geometry.values
-                    area = geometry.area
+            # if(construction == "86"):
+                try:
+                    constructionFolder = parcelSubfolder + construction
+                    
+                    constructionFile = constructionFolder + "/Plane Identification/"+ construction+".gpkg"
+                    planesGDF = gpd.read_file(constructionFile)
+                    lasFile = constructionFolder + "/Plane Identification/"+ construction +".laz"
+                    lasDF = laspy.read(lasFile)
+                    
+                    create_output_folder(constructionFolder + "/Shading/", deleteFolder=True)
+                    
+                    for cluster in tqdm(planesGDF.cluster.values, desc="Doing all clusters", leave=False):
+                        geometry = planesGDF[planesGDF.cluster == cluster].geometry.values
+                        area = geometry.area
 
-                    clusterPoints = lasDF[lasDF.classification == cluster]
-                    clusterPoints = clusterPoints.xyz
+                        clusterPoints = lasDF[lasDF.classification == cluster]
+                        clusterPoints = clusterPoints.xyz
 
-                    selectedPoints = sample_points(clusterPoints, cellSize=1)    
-                    shapely_points = [Point(p[:2]) for p in selectedPoints]
-                    inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
+                        selectedPoints = sample_points(clusterPoints, cellSize=1)    
+                        shapely_points = [Point(p[:2]) for p in selectedPoints]
+                        inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
 
-                    shading_results = []
-                    for idx, point in enumerate(tqdm(inside_points, desc="Processing points", leave=False)):
-                        shading_results.append(get_shading_profile(point, X, Y, Z))
+                        shading_results = []
+                        for idx, point in enumerate(tqdm(inside_points, desc="Processing points", leave=False)):
+                            shading_results.append(get_shading_profile(point, X, Y, Z))
 
-                    combined_array = np.hstack((inside_points, shading_results))
-                    exportFile = constructionFolder + "/Shading Optimized/" + str(cluster) + ".csv"
-                    np.savetxt(exportFile, combined_array, delimiter=",", fmt="%.2f")
-            except:
-                print(" ", parcel, construction, " ")
+                        combined_array = np.hstack((inside_points, shading_results))
+                        exportFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
+                        np.savetxt(exportFile, combined_array, delimiter=",", fmt="%.2f")
+                except:
+                    print(" ", parcel, construction, " ")
