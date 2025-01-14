@@ -28,20 +28,21 @@ def create_output_folder(directory, deleteFolder = False):
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
+# neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
-    if(parcel == "4649601DF3844H"): 
+    # if(parcel == "4649601DF3844H"): 
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-            if(construction == "546"):
+            # if(construction == "546"):
                 try:
                     constructionFolder = parcelSubfolder + construction + "/"
                     solarFolder = constructionFolder + "Solar Estimation Panels Simulated/"
                     create_output_folder(solarFolder, deleteFolder=True)
                             
                     allSunDC = pd.DataFrame()
-                    sunPath = parcelsFolder + parcel + "/" + construction + "/Solar Estimation PySAM/"
+                    sunPath = parcelsFolder + parcel + "/" + construction + "/Solar Estimation PySAM_DC_Yearly/"
 
                     for file in os.listdir(sunPath):
                         allSunDC = pd.concat([allSunDC, pd.read_csv(sunPath + file)], ignore_index=True)

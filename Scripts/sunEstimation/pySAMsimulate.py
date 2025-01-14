@@ -98,8 +98,6 @@ def runPySAMSimulation(file_names, tilts, plane, tmyfile, returnType):
         generation_df = generation_df/area
         annual_ac = generation_df.sum().sum() 
         return annual_ac
-    elif(returnType=="POA_m"):
-        return sum(pv.export()["Outputs"]["poa_monthly"])
     elif(returnType=="POA_Y"):
         return sum(pv.export()["Outputs"]["poa_monthly"])
 
@@ -126,38 +124,42 @@ tmyfile = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estim
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
+# neighborhood = "70_el esòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 annual_ac = 0
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
-    # if(parcel == "4054901DF3845C"):   
+    if((parcel == "4054901DF3845C") or (parcel == "4649601DF3844H")):
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-            # if(construction == "408"):
-                constructionFolder = parcelSubfolder + construction + "/"
-                solarFolder = constructionFolder + "Solar Estimation PySAM_POA_Yearly/"
-                create_output_folder(solarFolder, deleteFolder=True)
+            if((construction == "242") or (construction == "342") or (construction == "550") or (construction == "557")):
+                # try:
+                    constructionFolder = parcelSubfolder + construction + "/"
+                    solarFolder = constructionFolder + "Solar Estimation PySAM_DC_Yearly/"
+                    create_output_folder(solarFolder, deleteFolder=True)
 
-                planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
-                for cluster in tqdm(planesGDF.cluster.values, desc="Clusters", leave=False):
-                    shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
-                    plane = planesGDF[planesGDF.cluster == cluster]
-                    point_list = []
-                    annual_list = []
-                    if os.path.isfile(shadingFile):
-                        if(os.stat(shadingFile).st_size > 0):
-                            shadingProfilesDF = pd.read_csv(shadingFile, header=None)
-                            for i in tqdm(range(len(shadingProfilesDF)), desc="Sampled points", leave=False):
-                                coords = shadingProfilesDF.iloc[i][0:3]
-                                tilts = shadingProfilesDF.iloc[i][3:363]
+                    planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
+                    for cluster in tqdm(planesGDF.cluster.values, desc="Clusters", leave=False):
+                        shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
+                        plane = planesGDF[planesGDF.cluster == cluster]
+                        point_list = []
+                        annual_list = []
+                        if os.path.isfile(shadingFile):
+                            if(os.stat(shadingFile).st_size > 0):
+                                shadingProfilesDF = pd.read_csv(shadingFile, header=None)
+                                for i in tqdm(range(len(shadingProfilesDF)), desc="Sampled points", leave=False):
+                                    coords = shadingProfilesDF.iloc[i][0:3]
+                                    tilts = shadingProfilesDF.iloc[i][3:363]
 
-                                annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "POA_Y")
-                                point_list.append(coords)
-                                annual_list.append(annual)
+                                    annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "DC_Year")
+                                    point_list.append(coords)
+                                    annual_list.append(annual)
 
-                    solarDF = pd.DataFrame({"x": [point[0] for point in point_list], 
-                                            "y": [point[1] for point in point_list], 
-                                            "z": [point[2] for point in point_list], 
-                                            "annual": annual_list})
-                    solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       
+                        solarDF = pd.DataFrame({"x": [point[0] for point in point_list], 
+                                                "y": [point[1] for point in point_list], 
+                                                "z": [point[2] for point in point_list], 
+                                                "annual": annual_list})
+                        solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       
+                # except:
+                #     print(parcel, construction)

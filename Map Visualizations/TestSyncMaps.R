@@ -7,10 +7,11 @@ library(RColorBrewer)
 library(sf)
 library(leaflet.extras)
 library(htmlwidgets)
+library(RColorBrewer)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
-neighborhoods <- c("70_el Besòs i el Maresme")
+# neighborhoods <- c("70_el Besòs i el Maresme")
 # neighborhoods <- c("7_P.I. Can Petit")
 
 
@@ -62,18 +63,6 @@ for (neighborhood in neighborhoods){
   # parcels <- c("4058610DF3845G", "4554301DF3845D", "4251517DF3845A")
   for (parcel in parcels){
     constructions <- list.dirs(path = paste(base_folder, neighborhood, "/Parcels/", parcel, sep=""), recursive = FALSE, full.names = FALSE)
-    # gpkg_files <- paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", constructions, "/Map files/", constructions, ".gpkg")
-    # 
-    # partial_cadaster_sf_list <- lapply(gpkg_files, function(file) {
-    #   re_sf <- read_sf(file)
-    #   re_sf <- st_zm(re_sf)
-    #   re_sf <- st_transform(re_sf, 4326)
-    #   re_sf$parcel <- parcel
-    #   re_sf$construction <- gsub(".gpkg", "", basename(file))
-    #   return(re_sf)
-    # })
-    # cadaster_sf_list <- c(cadaster_sf_list, partial_cadaster_sf_list)
-    
     for (construction in constructions){
       planes <- list.files(
         path = paste0(base_folder, neighborhood, "/Parcels/", parcel, "/", construction, searchPath), 
@@ -99,19 +88,18 @@ for (neighborhood in neighborhoods){
 }
 # cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
-
-library(RColorBrewer)
-palette <- colorNumeric(palette = c("red", "green"), domain = planes_merged_sf$silhouette)
+paletteSilhouette <- colorNumeric(palette = c("red", "green"), domain = planes_merged_sf$silhouette)
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
   addPolygons(
-    fillColor = ~ palette(silhouette),
+    fillColor = ~ paletteSilhouette(silhouette),
     opacity = 1,
     stroke = TRUE,
     color = "black",
     fillOpacity = 1,           # Adjust the fill opacity for better visibility
-    weight = 1                 # Set outline thickness
+    weight = 1,                 # Set outline thickness
+    label = ~format(round(silhouette, 2), nsmall = 2)
   ) %>%
   # addPolygons(data = cadaster_merged_sf,
   #             weight = 4,
@@ -122,7 +110,7 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 20)) %>%
   #             label = ~paste(REFCAT, construction, CONSTRU, sep=". ")) %>%
   addScaleBar()
 
-# map2
+map2
 ###############################################################################################
 
 

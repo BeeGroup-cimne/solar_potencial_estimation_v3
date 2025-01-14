@@ -9,6 +9,7 @@ library(leaflet.extras)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
+neighborhoods <- c("70_el Besòs i el Maresme")
 
 cadaster_sf_list <- list()
 planes_sf_list <- list()
@@ -57,6 +58,19 @@ palette <- colorNumeric(palette = "inferno", domain = planes_merged_sf$yearly)
 
 map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
+
+  
+  addPolygons(
+    # fillColor = "blue",
+    fillColor = ~ palette(yearly),
+    opacity = 1,
+    stroke = TRUE,
+    color = "white",
+    fillOpacity = 1,           # Adjust the fill opacity for better visibility
+    weight = 0,                 # Set outline thickness
+    label = ~paste(parcel, construction, sep=". "),
+  ) %>%
+  
   addPolygons(data = cadaster_merged_sf,
               weight = 4,
               color =  "black",
@@ -66,24 +80,20 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
               label = ~paste(REFCAT, construction, CONSTRU, sep=". ")
   )%>%
   
-  addPolygons(
-    # fillColor = "blue",
-    fillColor = ~ palette(yearly),
-    opacity = 1,
-    stroke = TRUE,
-    color = "black",
-    fillOpacity = 1,           # Adjust the fill opacity for better visibility
-    weight = 1,                 # Set outline thickness
-    label = ~paste(parcel, construction, sep=". "),
-  ) %>%
-  
+  addLegend(
+    pal = palette,
+    values = ~yearly,
+    title = "Solar energy production<br>(kWh/panel/year)",
+    position = "bottomright",
+    opacity=1,
+  )%>%
   
   addScaleBar()
 
 map2
-library(leaflet)
-library(leafsync)
-library(htmltools)
-library(htmlwidgets)
-saveWidget(map2, file="panels.html")
+# library(leaflet)
+# library(leafsync)
+# library(htmltools)
+# library(htmlwidgets)
+# saveWidget(map2, file="panels.html")
 # 

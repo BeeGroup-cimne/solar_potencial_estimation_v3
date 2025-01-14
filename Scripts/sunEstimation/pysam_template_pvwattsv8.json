@@ -15,5 +15,6 @@
 	"en_snowloss" : 0,
 	"inv_eff" : 96,
 	"batt_simple_enable" : 0,
-	"constant" : 0
+	"constant" : 0,
+	"shading_en_azal":1
 }

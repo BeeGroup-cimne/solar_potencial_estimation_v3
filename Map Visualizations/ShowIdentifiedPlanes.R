@@ -9,6 +9,7 @@ library(leaflet.extras)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
+neighborhoods <- c("70_el Besòs i el Maresme")
 
 cadaster_sf_list <- list()
 planes_sf_list <- list()
@@ -76,9 +77,19 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
     label = ~cluster,
   ) %>%
   
+  addLegend(
+    pal = palette,
+    values = ~silhouette,
+    title = "Silhouette Score",
+    position = "bottomright",
+    opacity=1,
+  )%>%
   
   addScaleBar()
-
+map2 <- map2 %>%
+  htmltools::tags$style(
+    HTML(".leaflet-control { background: white !important; opacity: 1 !important; }")
+  )
 map2
 library(leaflet)
 library(leafsync)
