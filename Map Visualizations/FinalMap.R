@@ -170,8 +170,8 @@ panels_merged_sf <- do.call(rbind, panels_sf_list)
 
 palettePanels <- colorNumeric(palette = "inferno", domain = panels_merged_sf$yearly, na.color = "transparent")
 
-map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
-  addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=20)) %>%
+map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 19)) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, options = providerTileOptions(opacity=1, maxZoom=21)) %>%
   addPolygons(data = cadaster_merged_sf,
               weight = 8,
               color =  "black",
