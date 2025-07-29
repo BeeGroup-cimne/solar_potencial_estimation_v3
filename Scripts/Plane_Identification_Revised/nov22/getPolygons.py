@@ -115,82 +115,83 @@ def compute_silhouette(distances, cluster, labels):
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
 neighborhood = "7_P.I. Can Petit"
-neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
-    # print(parcel)
-    parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
-        constructionFolder = parcelSubfolder + construction
-        resultsFolder = constructionFolder + "/Plane Identification/"
-        lasPath = resultsFolder + construction + ".laz"
-        lasDF = laspy.read(lasPath)
-        
-        gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
-        cadasterGDF = gpd.read_file(gpkgFile)
-
-        points = lasDF.xyz
-        labels = lasDF.classification
-        vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
-        vorClipped = vorClipped[vorClipped.cluster != 255]  
-        
-        #Z = Ax+By+D
-        A_list = []
-        B_list = []
-        D_list = []
-        tilt_list = []
-        azimuth_list = []
-        try:
-            for idx in vorClipped.cluster:
-                points = lasDF.xyz[np.where(lasDF.classification == idx)]
-                planeParams = LinearRegression().fit(points[:, 0:2], points[:, 2])
-                A_list.append(planeParams.coef_[0])
-                B_list.append(planeParams.coef_[1])
-                D_list.append(planeParams.intercept_)
-                tilt,azimuth = __getTiltAzimuth([planeParams.coef_[0], planeParams.coef_[1], -1, planeParams.intercept_])
-                tilt_list.append(tilt)
-                azimuth_list.append(azimuth)
+    # if(parcel == "5193403DF0859S"):
+        # print(parcel)
+        parcelSubfolder = parcelsFolder + parcel + "/"
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+            constructionFolder = parcelSubfolder + construction
+            resultsFolder = constructionFolder + "/Plane Identification/"
+            lasPath = resultsFolder + construction + ".laz"
+            lasDF = laspy.read(lasPath)
+            
+            gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
+            cadasterGDF = gpd.read_file(gpkgFile)
 
             points = lasDF.xyz
-            silhouette_list = []
-            distances = np.zeros((points.shape[0], len(vorClipped.cluster)))
-
-            for plane_idx in range(len(vorClipped.cluster)):
-                a, b, c, d = A_list[plane_idx], B_list[plane_idx], -1, D_list[plane_idx]
-                distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + d - points[:, 2])
-                # distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + c * points[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
-
-            if(len(vorClipped.cluster.values) == 1):
-                    silhouette_list.append(1)
-            else:
-                for cluster in vorClipped.cluster.values:
-                    silhouette_list.append(compute_silhouette(distances, cluster, labels))
-    
-            vorClipped["A"] = A_list
-            vorClipped["B"] = B_list                                                                                                                                                                                
-            vorClipped["D"] = D_list
-            vorClipped["tilt"] = tilt_list
-            vorClipped["azimuth"] = azimuth_list
-            vorClipped["silhouette"] = silhouette_list
-
-            vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 1))
-            vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: clean_holes(geom, 0.25))
+            labels = lasDF.classification
+            vorClipped = getVoronoiClipped(lasDF.xyz, labels, cadasterGDF)
+            vorClipped = vorClipped[vorClipped.cluster != 255]  
             
+            #Z = Ax+By+D
+            A_list = []
+            B_list = []
+            D_list = []
+            tilt_list = []
+            azimuth_list = []
+            try:
+                for idx in vorClipped.cluster:
+                    points = lasDF.xyz[np.where(lasDF.classification == idx)]
+                    planeParams = LinearRegression().fit(points[:, 0:2], points[:, 2])
+                    A_list.append(planeParams.coef_[0])
+                    B_list.append(planeParams.coef_[1])
+                    D_list.append(planeParams.intercept_)
+                    tilt,azimuth = __getTiltAzimuth([planeParams.coef_[0], planeParams.coef_[1], -1, planeParams.intercept_])
+                    tilt_list.append(tilt)
+                    azimuth_list.append(azimuth)
 
-            vorClipped = gpd.clip(vorClipped, cadasterGDF)
-            vorClipped = vorClipped[~vorClipped["geometry"].apply(lambda geom: isinstance(geom, GeometryCollection))]
-            vorClipped = vorClipped.reset_index(drop=True)
+                points = lasDF.xyz
+                silhouette_list = []
+                distances = np.zeros((points.shape[0], len(vorClipped.cluster)))
 
-            for i in reversed(range(len(vorClipped)-1)): 
-                subsequent_geometries = unary_union(vorClipped.iloc[i+1:].geometry)
-                if(vorClipped.geometry[i] != None):
-                    vorClipped.at[i, 'geometry'] = vorClipped.geometry.iloc[i].difference(subsequent_geometries)
+                for plane_idx in range(len(vorClipped.cluster)):
+                    a, b, c, d = A_list[plane_idx], B_list[plane_idx], -1, D_list[plane_idx]
+                    distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + d - points[:, 2])
+                    # distances[:, plane_idx] = np.abs(a * points[:, 0] + b * points[:, 1] + c * points[:, 2] + d) / np.sqrt(a**2 + b**2 + c**2)
 
-
-            vorClipped = vorClipped[vorClipped.geometry != None] 
-            vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")        
+                if(len(vorClipped.cluster.values) == 1):
+                        silhouette_list.append(1)
+                else:
+                    for cluster in vorClipped.cluster.values:
+                        silhouette_list.append(compute_silhouette(distances, cluster, labels))
         
-        except:
-            print(" ", parcel, construction, " ")
+                vorClipped["A"] = A_list
+                vorClipped["B"] = B_list                                                                                                                                                                                
+                vorClipped["D"] = D_list
+                vorClipped["tilt"] = tilt_list
+                vorClipped["azimuth"] = azimuth_list
+                vorClipped["silhouette"] = silhouette_list
+
+                vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: delete_polygons_by_area(geom, 1))
+                vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: clean_holes(geom, 0.25))
+                
+
+                vorClipped = gpd.clip(vorClipped, cadasterGDF)
+                vorClipped = vorClipped[~vorClipped["geometry"].apply(lambda geom: isinstance(geom, GeometryCollection))]
+                vorClipped = vorClipped.reset_index(drop=True)
+
+                for i in reversed(range(len(vorClipped)-1)): 
+                    subsequent_geometries = unary_union(vorClipped.iloc[i+1:].geometry)
+                    if(vorClipped.geometry[i] != None):
+                        vorClipped.at[i, 'geometry'] = vorClipped.geometry.iloc[i].difference(subsequent_geometries)
+
+
+                vorClipped = vorClipped[vorClipped.geometry != None] 
+                vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")        
+            
+            except:
+                print(" ", parcel, construction, " ")

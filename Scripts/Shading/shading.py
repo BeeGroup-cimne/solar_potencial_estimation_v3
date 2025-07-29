@@ -17,14 +17,14 @@ warnings.filterwarnings("ignore")
 
 # Parcel level: load necessary Lidar
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
+# neighborhood = "HECAPO"
 neighborhood = "Test_70_el Besòs i el Maresme"
-# neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 lidarFolder = basePath + "RAW_Data/LiDAR/"
 
 lidarCellsInfoFile = basePath + "Results/Test_70_el Besòs i el Maresme/necessaryLiDAR_Buffer100.txt"
-lidarCellsInfoFile = basePath + "Results/70_el Besòs i el Maresme/necessaryLiDAR_Buffer100.txt"
+# lidarCellsInfoFile = basePath + "Results/HECAPO/necessaryLiDAR_Buffer100.txt"
 lidarInfoDF = pd.read_csv(lidarCellsInfoFile)
 lidarInfoDF["files"] = lidarInfoDF["files"].apply(json.loads)
 lidarInfoDF["bounds"] = lidarInfoDF["bounds"].apply(json.loads)
@@ -53,9 +53,9 @@ def load_necessary_laz(lidarFolder, fileList):
     return lasCoords
 
 def getGrid(selectedCoords):
-    spacing = 0.1
+    spacing = 1
     region = pygmt.info(data=selectedCoords, spacing=spacing)
-    df_trimmed = pygmt.blockmedian(data=selectedCoords, T=0.99, spacing = spacing, region = region)
+    df_trimmed = pygmt.blockmedian(data=selectedCoords, T=0.5, spacing = spacing, region = region)
     df_trimmed = df_trimmed.rename(columns={0:"x",1:"y",2:"z"})
     with open(os.devnull, 'w') as fnull, contextlib.redirect_stderr(fnull):
         grid = pygmt.surface(x=df_trimmed.x, y=df_trimmed.y, z=df_trimmed.z, spacing=spacing, region = region, tension = 0.35) #T: check bibliography
@@ -67,7 +67,7 @@ def getGrid(selectedCoords):
 
     return X, Y, Z
 
-def sample_points(clusterPoints, cellSize = 0.5):
+def sample_points(clusterPoints, cellSize = 0.75):
     grid = defaultdict(list)
 
     # Round points to the nearest integer for x and y
@@ -97,10 +97,10 @@ def get_shading_profile(point, X, Y, Z):
     tiltangle = np.zeros(X.shape)
     # # This can be further optimized by applying a mask on the azimuth, but that means that the angles need to be handled in case there is a missing orientation
     # mask = (azimuthAngle >= 60) & (azimuthAngle <= 300) & (Z >= Z_point)
-    # distance = (X[mask] - point[0])**2 + (Y[mask] - point[1])**2
+    # distance = np.sqrt((X[mask] - point[0])**2 + (Y[mask] - point[1])**2)
     # tiltangle[mask] = np.arctan2((Z[mask] - Z_point), distance) * 180 / math.pi
 
-    distance = (X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2
+    distance = np.sqrt((X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2)
     tiltangle = np.arctan2((Z[:,:] - Z_point), distance[:,:])*180/math.pi
     tiltangle = np.maximum(tiltangle, 0)
 
@@ -118,8 +118,8 @@ def get_shading_profile(point, X, Y, Z):
 
 previousFileList = []
 for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave=True):
-    parcel = selectedParcels.REFCAT[i]
-    if((parcel == "4054901DF3845C") or (parcel == "4649601DF3844H")):
+        parcel = selectedParcels.REFCAT[i]
+    # if((parcel == "4054901DF3845C") or (parcel == "4649601DF3844H")):
 
         if(not np.array_equal(previousFileList, selectedParcels.files[i])):
             lasCoords = load_necessary_laz(lidarFolder, selectedParcels.files[i])
@@ -134,7 +134,8 @@ for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave
         parcelSubfolder = parcelsFolder + parcel + "/"
 
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=True):
-            if((construction == "242") or (construction == "342") or (construction == "550") or (construction == "557")):
+            # if((construction == "242") or (construction == "342") or (construction == "550") or (construction == "557")):
+            # if((construction == "408") or (construction == "86")):
                 try:
                     constructionFolder = parcelSubfolder + construction
                     
@@ -151,7 +152,6 @@ for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave
 
                         clusterPoints = lasDF[lasDF.classification == cluster]
                         clusterPoints = clusterPoints.xyz
-
                         selectedPoints = sample_points(clusterPoints, cellSize=1)    
                         shapely_points = [Point(p[:2]) for p in selectedPoints]
                         inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
@@ -163,5 +163,5 @@ for i in tqdm(range(len(selectedParcels)), desc="Looping through parcels", leave
                         combined_array = np.hstack((inside_points, shading_results))
                         exportFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
                         np.savetxt(exportFile, combined_array, delimiter=",", fmt="%.2f")
-                except:
-                    print(" ", parcel, construction, " ")
+                except Exception as e:
+                    print(" ", parcel, construction, " ", e)

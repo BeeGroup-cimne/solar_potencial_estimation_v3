@@ -84,16 +84,16 @@ map2 <- leaflet(planes_merged_sf, options = leafletOptions(maxZoom = 25)) %>%
     position = "bottomright",
     opacity=1,
   )%>%
-  
   addScaleBar()
-map2 <- map2 %>%
-  htmltools::tags$style(
-    HTML(".leaflet-control { background: white !important; opacity: 1 !important; }")
-  )
-map2
+
+# map2 <- map2 %>%
+#   htmltools::tags$style(
+#     HTML(".leaflet-control { background: white !important; opacity: 1 !important; }")
+#   )
+# map2
 library(leaflet)
 library(leafsync)
 library(htmltools)
 library(htmlwidgets)
-saveWidget(map2, file="m.html")
+saveWidget(map2, file="planeIDneighborhood.html")
 # 

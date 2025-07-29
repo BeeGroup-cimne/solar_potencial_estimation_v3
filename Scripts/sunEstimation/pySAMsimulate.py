@@ -121,22 +121,23 @@ file_names = ["/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_e
     "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/sunEstimation/pysam_template_grid.json"]
 
 tmyfile = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/RAW_Data/TMY/NREL/419806_41.41_2.22_tmy-2022.csv"
+tmyfile = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/HECAPO/410536_41.45_1.86_tmy-2022.csv"
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
-# neighborhood = "70_el esòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 annual_ac = 0
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
-    if((parcel == "4054901DF3845C") or (parcel == "4649601DF3844H")):
+    # if((parcel == "4054901DF3845C") or (parcel == "4649601DF3844H")):
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
-            if((construction == "242") or (construction == "342") or (construction == "550") or (construction == "557")):
-                # try:
+            # if((construction == "242") or (construction == "342") or (construction == "550") or (construction == "557")):
+                try:
                     constructionFolder = parcelSubfolder + construction + "/"
-                    solarFolder = constructionFolder + "Solar Estimation PySAM_DC_Yearly/"
+                    solarFolder = constructionFolder  + "Solar Estimation PySAM_DC_Yearly/"
                     create_output_folder(solarFolder, deleteFolder=True)
 
                     planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
@@ -152,6 +153,7 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                                     coords = shadingProfilesDF.iloc[i][0:3]
                                     tilts = shadingProfilesDF.iloc[i][3:363]
 
+                                    # annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "POA_Y")
                                     annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "DC_Year")
                                     point_list.append(coords)
                                     annual_list.append(annual)
@@ -161,5 +163,34 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                                                 "z": [point[2] for point in point_list], 
                                                 "annual": annual_list})
                         solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       
-                # except:
-                #     print(parcel, construction)
+
+
+
+
+                    solarFolder = constructionFolder  + "/Solar Estimation PySAM_POA_Yearly/"
+                    create_output_folder(solarFolder, deleteFolder=True)
+
+                    planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
+                    for cluster in tqdm(planesGDF.cluster.values, desc="Clusters", leave=False):
+                        shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
+                        plane = planesGDF[planesGDF.cluster == cluster]
+                        point_list = []
+                        annual_list = []
+                        if os.path.isfile(shadingFile):
+                            if(os.stat(shadingFile).st_size > 0):
+                                shadingProfilesDF = pd.read_csv(shadingFile, header=None)
+                                for i in tqdm(range(len(shadingProfilesDF)), desc="Sampled points", leave=False):
+                                    coords = shadingProfilesDF.iloc[i][0:3]
+                                    tilts = shadingProfilesDF.iloc[i][3:363]
+
+                                    annual = runPySAMSimulation(file_names, tilts, plane, tmyfile, "POA_Y")
+                                    point_list.append(coords)
+                                    annual_list.append(annual)
+
+                        solarDF = pd.DataFrame({"x": [point[0] for point in point_list], 
+                                                "y": [point[1] for point in point_list], 
+                                                "z": [point[2] for point in point_list], 
+                                                "annual": annual_list})
+                        solarDF.to_csv(solarFolder + str(cluster) + ".csv", index=False)       
+                except Exception as e:
+                    print(parcel, construction, e)

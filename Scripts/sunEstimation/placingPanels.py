@@ -81,7 +81,7 @@ def rect(polygon, tilt=0, size=[panelWidth, panelHeight], tol=0, clip=True, incl
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
-neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
@@ -111,14 +111,14 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                     else: # Horizontal
                         orientedBB = oriented_envelope(geom)
                         coords = list(orientedBB.exterior.coords)
-                    try:
+
                         p1, p2 = coords[0], coords[1]
                         dx = p2[0] - p1[0]
                         dy = p2[1] - p1[1]
                         angle_radians = math.atan2(dy, dx)
                         angle = math.degrees(angle_radians)
         
-
+                    try:
                         landscape_rotated = gpd.GeoSeries(geom).rotate(angle, origin=centroid)
                         landscape_grid, landscape_count = rect(landscape_rotated.geometry[0], tilt=tilt, include_poly=False)
 

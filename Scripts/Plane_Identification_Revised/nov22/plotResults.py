@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import tqdm
 import geopandas as gpd
 
-base_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/"
-base_export_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane Information/V2/Images/"
+base_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/HECAPO/"
+base_export_path = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/HECAPO/Images/"
 
-mask = "GradientHDBSCAN"
+mask = ""
 files = os.listdir(base_path)
 selected_files = [file for file in files if file.startswith(mask)]
 

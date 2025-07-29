@@ -18,7 +18,7 @@ neighborhood = "Test_70_el Besòs i el Maresme"
 
 baseOutputFolder = basePath + "/Results/" + neighborhood + "/Testing Plane ID_2/"
 
-mask = "GradientHDBSCAN"
+mask = "planeExtract"
 files = os.listdir(baseOutputFolder)
 selected_files = [file for file in files if file.startswith(mask)]
 selected_files = files

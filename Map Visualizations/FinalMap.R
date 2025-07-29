@@ -11,6 +11,7 @@ library(RColorBrewer)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
+neighborhoods <- c("70_el Besòs i el Maresme")
 
 re_sf_list <- list()
 
@@ -95,7 +96,7 @@ for (neighborhood in neighborhoods){
     cadaster_sf_list <- c(re_sf_list, cadaster_sf_list)
   }
 }
-cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
+#cadaster_merged_sf <- do.call(rbind, cadaster_sf_list)
 planes_merged_sf <- do.call(rbind, planes_sf_list)
 paletteSilhouette <- colorNumeric(palette = c("red", "green"), domain = planes_merged_sf$silhouette)
 
@@ -179,11 +180,11 @@ map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 19)) %>%
               fillOpacity = 0,
               opacity = 1,
               # label = ~paste(REFCAT, construction, CONSTRU, sep=". "
-              popup = ~paste0('<h3>', gsub(".pdf", "",gsub("_Report.pdf", "", Filename)),"</h3>",
-                              '<a href="data/Reports/',Filename,'"target="_blank" rel="noopener noreferrer">
-                              Open the building PV potential analysis in a new tab</a>', '<br>',
-                              '<br> <embed src="data/Reports/', Filename,
-                              '" width="600px" height="400px"/>'),
+              # popup = ~paste0('<h3>', gsub(".pdf", "",gsub("_Report.pdf", "", Filename)),"</h3>",
+              #                 '<a href="data/Reports/',Filename,'"target="_blank" rel="noopener noreferrer">
+              #                 Open the building PV potential analysis in a new tab</a>', '<br>',
+              #                 '<br> <embed src="data/Reports/', Filename,
+              #                 '" width="600px" height="400px"/>'),
               popupOptions = popupOptions(maxHeight = 1000, maxWidth = 1000),
               group = 'VectorReport',
   )  %>%
@@ -196,11 +197,11 @@ map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 19)) %>%
     fillOpacity = 1,           # Adjust the fill opacity for better visibility
     weight = 1,                 # Set outline thickness
     group = "Plane identification",
-    popup = ~paste0('<h3>', paste0(parcel,"_",construction),"</h3>",
-                    '<a href="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),'"target="_blank" rel="noopener noreferrer">
-                              Open the building PV potential analysis in a new tab</a>', '<br>',
-                    '<br> <embed src="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),
-                    '" width="600px" height="400px"/>'),
+    # popup = ~paste0('<h3>', paste0(parcel,"_",construction),"</h3>",
+    #                 '<a href="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),'"target="_blank" rel="noopener noreferrer">
+    #                           Open the building PV potential analysis in a new tab</a>', '<br>',
+    #                 '<br> <embed src="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),
+    #                 '" width="600px" height="400px"/>'),
     popupOptions = popupOptions(maxHeight = 1000, maxWidth = 1000),
   ) %>%
   
@@ -224,11 +225,11 @@ map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 19)) %>%
     fillOpacity = 1,           # Adjust the fill opacity for better visibility
     weight = 0,                 # Set outline thickness
     group = "Panels simulation",
-    popup = ~paste0('<h3>', paste0(parcel,"_",construction),"</h3>",
-                    '<a href="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),'"target="_blank" rel="noopener noreferrer">
-                              Open the building PV potential analysis in a new tab</a>', '<br>',
-                    '<br> <embed src="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),
-                    '" width="600px" height="400px"/>'),
+    # popup = ~paste0('<h3>', paste0(parcel,"_",construction),"</h3>",
+    #                 '<a href="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),'"target="_blank" rel="noopener noreferrer">
+    #                           Open the building PV potential analysis in a new tab</a>', '<br>',
+    #                 '<br> <embed src="data/Reports/', paste0(parcel,"_",construction,"_Report.pdf"),
+    #                 '" width="600px" height="400px"/>'),
     popupOptions = popupOptions(maxHeight = 1000, maxWidth = 1000),
   ) %>%
   
@@ -281,8 +282,7 @@ map3 <- leaflet(panels_merged_sf, options = leafletOptions(maxZoom = 19)) %>%
             el.style.display = 'none';
           };
         };
-      });
+      });                                                 
     }")
 
-map3
-############################################################################################
+map3 ############################################################################################

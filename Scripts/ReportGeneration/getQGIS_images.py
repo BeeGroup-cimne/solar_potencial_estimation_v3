@@ -9,6 +9,27 @@ from tqdm import tqdm
 
 import geopandas as gpd
 import laspy
+
+def get_layer_centroid(layer):
+    if not layer.isValid():
+        print("Layer is not valid")
+        return None
+
+    layer.updateExtents()  # Ensure the layer's spatial extents are up to date
+    features = list(layer.getFeatures())  # Get all features in the layer
+
+    if not features:
+        print("No features in layer")
+        return None
+
+    combined_geom = QgsGeometry.unaryUnion([feat.geometry() for feat in features])  # Merge geometries
+    if combined_geom is None or combined_geom.isEmpty():
+        print("Geometry is empty")
+        return None
+
+    centroid = combined_geom.centroid()
+    return centroid.asPoint()  # Returns QgsPointXY
+
     
 def getZoomOut(construction, constructionFolder, reportFolder,  offset=250):
     def finished_zoomOut():
@@ -51,11 +72,14 @@ def getZoomIn(construction, constructionFolder, reportFolder, buffer=2.5):
         img = render.renderedImage()
         img.save(reportFolder + "ZoomIn.png")
 
-    cadasterPath = constructionFolder + "/Map files/" + construction + ".gpkg"
-    cadasterGDF = gpd.read_file(cadasterPath)
+
 
     QgsProject.instance().clear()
 
+    cadasterPath = constructionFolder + "/Map files/" + construction + ".gpkg"
+    cadasterGDF = gpd.read_file(cadasterPath)
+    
+    
     # Image 2: Satellite View with cadaster outline
     # map = 'type=xyz&zmin=0&zmax=19&url=https://mt1.google.com/vt/lyrs=s%26x={x}%26y={y}%26z={z}'
     map = 'type=xyz&zmin=0&zmax=19&url=https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
@@ -84,17 +108,19 @@ def getZoomIn(construction, constructionFolder, reportFolder, buffer=2.5):
     render.waitForFinished()
 
 
-parcel = "4054901DF3845C"
-construction = "408"
+# parcel = "4054901DF3845C"
+# construction = "408"
     
     
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
     parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+    # for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+    for construction in [x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)]:
         constructionFolder = parcelSubfolder + construction + "/"
         reportFolder = constructionFolder + "Report Files/"
             

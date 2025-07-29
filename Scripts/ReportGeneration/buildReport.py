@@ -9,8 +9,9 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-# neighborhood = "70_el Besòs i el Maresme"
-neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
+# neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 import warnings
@@ -382,5 +383,6 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
                     {"path": constructionFolder + "Report Files/PVpanels.png"}
                 ]
 
-                output_folder = "/home/jaumeasensio/Documents/TFM_Web/jaumeasensiob.github.io/data/Reports/"
+                # output_folder = "/home/jaumeasensio/Documents/TFM_Web/jaumeasensiob.github.io/data/Reports/"
+                output_folder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/" + neighborhood  + "/Reports/"
                 generate_pdf(parcel, construction, reportFolder, images, output_folder)

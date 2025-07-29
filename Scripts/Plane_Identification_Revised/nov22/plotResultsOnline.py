@@ -7,10 +7,10 @@ from matplotlib.ticker import ScalarFormatter
 
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
-parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/planeExtract_distance_threshold_0.45__useDistanceSampling_True_inlierThreshold_0.3_num_iterations_50/"
+parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/HECAPO/Parcels/"
 # parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/KPlanes_distance_threshold_0.5__useDistanceSampling_True_inlierThreshold_inf_num_iterations_20/"
 # parcelsFolder = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/Test_70_el Besòs i el Maresme/Testing Plane ID_2/GradientHDBSCAN_distance_threshold_0.5__squareSize_2_polar_False_minClusterSize_12/"
 
@@ -32,8 +32,11 @@ for parcel in parcels:
     for construction in [x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)]:
         constructionFolder = parcelSubfolder + construction
         planesPath = constructionFolder + "/Plane Identification/" + construction + ".gpkg"
-        planesGDF = gpd.read_file(planesPath)
-        
+        try:
+            planesGDF = gpd.read_file(planesPath)
+        except:
+            pass
+
         # Update the minimum silhouette score
         if "silhouette" in planesGDF.columns:
             min_silhouette = min(min_silhouette, planesGDF["silhouette"].min())
@@ -52,8 +55,11 @@ for idx, parcel in enumerate(parcels):
     for construction in [x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)]:
         constructionFolder = parcelSubfolder + construction
         planesPath = constructionFolder + "/Plane Identification/" + construction + ".gpkg"
-        planesGDF = gpd.read_file(planesPath)
-       
+        try:
+            planesGDF = gpd.read_file(planesPath)
+        except:
+            pass
+        
         plot = planesGDF.plot(column="silhouette", edgecolor="black", cmap=red_to_green, legend=False, ax=ax, vmin=min_silhouette, vmax=1)
 
     ax.set_aspect('equal', 'box')
@@ -69,4 +75,4 @@ cbar.set_label("Silhouette Score")
 
 
 # Show the plot
-plt.savefig("/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/Plane_Identification_Revised/nov22/plotResultsPlaneExtract.png", dpi=300)
+plt.savefig("Results/HECAPO/Images/Results", dpi=300)

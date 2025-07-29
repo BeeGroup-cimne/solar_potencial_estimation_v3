@@ -99,7 +99,7 @@ class HeightSplit():
         pass
 
 class PlanesCluster():
-    def __init__(self, inlierThreshold=0.15, num_iterations=10, minPlanes=2, maxPlanes=20, iterationsToConverge=10, useDistanceSampling=True):
+    def __init__(self, inlierThreshold=0.15, num_iterations=10, minPlanes=1, maxPlanes=20, iterationsToConverge=10, useDistanceSampling=True):
         self.inlierThreshold = inlierThreshold
         self.num_iterations = num_iterations
         self.minPlanes = minPlanes

@@ -27,7 +27,7 @@ def create_output_folder(directory, deleteFolder = False):
 
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 # neighborhood = "70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 

@@ -11,9 +11,10 @@ def mergeLidar(lazPath, filesToMerge, outputFile):
         'FILTER_EXTENT':None,
         'OUTPUT':outputFile})
 
-basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-lazPath = basePath + "RAW_Data/LiDAR/"
-filesToMerge = [433584, 433585, 433586, 434584, 434585, 434586, 435584, 435585, 435586]
+basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/HECAPO/"
+lazPath = basePath + "RAW_Data/"
+# filesToMerge = [433584, 433585, 433586, 434584, 434585, 434586, 435584, 435585, 435586]
+filesToMerge = [404588, 404589, 405588, 405589]
 outputFile = basePath + "Data/Merged_LiDAR.laz"
 
 mergeLidar(lazPath, filesToMerge, outputFile)

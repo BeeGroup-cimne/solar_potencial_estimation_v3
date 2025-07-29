@@ -39,8 +39,8 @@ def create_output_folder(directory, deleteFolder = False):
 
 
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
-# neighborhood = "70_el Besòs i el Maresme"
-neighborhood = "Test_70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
+# neighborhood = "Test_70_el Besòs i el Maresme"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 scalebar = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Scripts/ReportGeneration/Scale_250.png"
 
@@ -180,7 +180,7 @@ def classifyPoA(allPoA):
     return(counts_df)
 
 def getPoAInfoImages(construction, constructionFolder, reportFolder):
-    try:
+    # try:
         cadasterPath = constructionFolder + "/Map files/" + construction + ".gpkg"
         cadasterGDF = gpd.read_file(cadasterPath)
 
@@ -234,8 +234,8 @@ def getPoAInfoImages(construction, constructionFolder, reportFolder):
         counts_df["colorAlpha"] = [color[3] for color in colors]
 
         counts_df.to_csv(reportFolder + "PoA.csv", index=False)
-    except:
-        print(constructionFolder)
+    # except Exception as e:
+    #     print(construction, e)
 
 def getPVimages(planesGDF, cadasterGDF, panelsGDF):
     fig, ax = plt.subplots(figsize=(6, 6)) 
@@ -296,6 +296,7 @@ def PVpanelsImageInfo(construction, constructionFolder, reportFolder):
     cadasterPath = constructionFolder + "/Map files/" + construction + ".gpkg"
     cadasterGDF = gpd.read_file(cadasterPath)
 
+
     panelsPath = constructionFolder + "/Solar Estimation Panels Simulated/" + construction + ".gpkg"
     panelsGDF = gpd.read_file(panelsPath)
 
@@ -313,26 +314,32 @@ for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
             # if(construction == "408"):
                 constructionFolder = parcelSubfolder + construction + "/"
                 reportFolder = constructionFolder + "Report Files/"
-                create_output_folder(reportFolder)
+                # create_output_folder(reportFolder)
 
-                # # Get location info
-                # location_info = get_location_info(construction, constructionFolder)
-                # with open(reportFolder + 'location_info.json', 'w') as f:
-                #     json.dump(location_info, f)
+                # Get location info
+                location_info = get_location_info(construction, constructionFolder)
+                with open(reportFolder + 'location_info.json', 'w') as f:
+                    json.dump(location_info, f)
 
-                # # Get lidar image and apply scale bar to map image
-                # get_location_images(construction, constructionFolder, reportFolder)
-                # applyScaleBar(reportFolder, scalebar)
+                # Get lidar image and apply scale bar to map image
+                get_location_images(construction, constructionFolder, reportFolder)
+                applyScaleBar(reportFolder, scalebar)
 
 
                 # Get id rooftops images and info
-                # getPlanesImageAndInfo(construction, constructionFolder, reportFolder)
-
+                try:
+                    getPlanesImageAndInfo(construction, constructionFolder, reportFolder)
+                except:
+                    print(parcel, construction)
+                    
                 # Get PoA info and images
-                getPoAInfoImages(construction, constructionFolder, reportFolder)
-
+                try:
+                    getPoAInfoImages(construction, constructionFolder, reportFolder)
+                except:
+                    print(parcel, construction)
+                
                 # Get PV info
-                # try:
-                #     PVpanelsImageInfo(construction, constructionFolder, reportFolder)
-                # except:
-                #     print(parcel, construction)
+                try:
+                    PVpanelsImageInfo(construction, constructionFolder, reportFolder)
+                except:
+                    print(parcel, construction)

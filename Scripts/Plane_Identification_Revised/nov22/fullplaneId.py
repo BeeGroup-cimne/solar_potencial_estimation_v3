@@ -23,32 +23,33 @@ def create_output_folder(directory, deleteFolder = False):
 basePath = "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/"
 neighborhood = "Test_70_el Besòs i el Maresme"
 neighborhood = "7_P.I. Can Petit"
-neighborhood = "70_el Besòs i el Maresme"
+neighborhood = "HECAPO"
 parcelsFolder = basePath + "/Results/" + neighborhood + "/Parcels/"
 
 for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    # if(parcel == "5193403DF0859S"):
     # print(parcel)
-    parcelSubfolder = parcelsFolder + parcel + "/"
-    for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
-        # print(construction)
-        constructionFolder = parcelSubfolder + construction
-        create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
+        parcelSubfolder = parcelsFolder + parcel + "/"
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+            # print(construction)
+            constructionFolder = parcelSubfolder + construction
+            create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
 
-        lasPath = constructionFolder + "/Map files/" + construction + ".laz"
-        lasDF = laspy.read(lasPath)
-        gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
-        cadasterGDF = gpd.read_file(gpkgFile)
-        try:
-            pipeline = ClusterPipeline([
-                HeightSplit(distance_threshold = 0.45),  # First clustering stage
-                PlaneExtraction(inlierThreshold=0.3, num_iterations=200),
-            ])
-            pipeline.fit(lasDF.xyz)
+            lasPath = constructionFolder + "/Map files/" + construction + ".laz"
+            lasDF = laspy.read(lasPath)
+            gpkgFile = constructionFolder + "/Map files/" + construction + ".gpkg"
+            cadasterGDF = gpd.read_file(gpkgFile)
+            try:
+                pipeline = ClusterPipeline([
+                    # HeightSplit(distance_threshold = 0.45),  # First clustering stage
+                    PlaneExtraction(inlierThreshold=0.3, num_iterations=50),
+                ])
+                pipeline.fit(lasDF.xyz)
 
-        except:
-            print(" ", parcel, construction, " ")
+            except:
+                print(" ", parcel, construction, " ")
 
-        lasDF.classification  = pipeline.final_labels
+            lasDF.classification  = pipeline.final_labels
 
-        lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
+            lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
     
