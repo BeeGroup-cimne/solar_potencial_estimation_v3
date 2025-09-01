@@ -7,6 +7,7 @@ import os
 from utils import create_output_folder
 import laspy
 import traceback
+import matplotlib.pyplot as plt
 
 def assign_clusters(parcelsFolder, pipeline):
     for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
@@ -19,11 +20,10 @@ def assign_clusters(parcelsFolder, pipeline):
             lasDF = laspy.read(lasPath)
             try:
                 pipeline.fit(lasDF.xyz)
+                lasDF.classification  = pipeline.final_labels
+                lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
             except Exception as e:
                 print(" ", parcel, construction, " ", e, traceback.format_exc())
-
-            lasDF.classification  = pipeline.final_labels
-            lasDF.write(constructionFolder + "/Plane Identification/"+construction+".laz")
     pass
 
 class ClusterPipeline:
@@ -225,12 +225,12 @@ class kPlanes():
         best_planes = []
 
         scores_ = []
-        for n_planes in range(self.minPlanes, self.maxPlanes+1):
+        for n_planes in tqdm(range(self.minPlanes, self.maxPlanes+1), desc="Finding n planes", leave=False):
             best_score_n = -np.inf
             best_labels_n = []    
             best_planes_n = []
 
-            for i in range(self.num_iterations):
+            for i in tqdm(range(self.num_iterations), desc="Iterating", leave=False):
                 # Sample points and get planes
                 centroids = self.sampleCentroid(X, n_planes)
                 triplets = self.sample2Coplanar(X, centroids)
@@ -277,14 +277,13 @@ class kPlanes():
                         finalPlanes = planes
                 
                 ### COMPUTE SCORE #####################################################################
-                print("HERE")
                 score = ClusterMetrics.planarSilhouette(X, labels)
                 if(score > best_score_n):
                     best_score_n = score
                     best_labels_n = lastLabels
                     best_planes_n = finalPlanes
-                print("HERE2")
             ### COMPARE SCORES AND KEEP BEST #####################################################################
+            scores_.append(best_score_n)
             if(best_score_n > best_score):
                 best_score = best_score_n
                 best_labels = best_labels_n

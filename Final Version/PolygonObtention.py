@@ -138,34 +138,67 @@ def __getSilhouette(voronoiGDF, points):
     for label in np.unique(labels[labels!= -1]):
         mask = (labels == label)
         actualInliers = points[mask]
-        ###############
-        ## Conflict: this is expensive as fuck
-        ###############
         
-        # compute all vertical distances from every point to every plane
-        distances = np.zeros((actualInliers.shape[0], len(planes)))
-        for plane_idx in range(len(planes)):
-            distances[:, plane_idx] = abs(actualInliers[:,2] - planes[plane_idx].predict(actualInliers[:,0:2]))
-        # keep the one referring to their labels as their actual distance (a_i), 
-        a = distances[np.arange(distances.shape[0]), label]
-        
-        # and the next closest as the neighbor distance (b_i)
-        rows = np.arange(distances.shape[0])
-        cols = label            
-        mask = np.ones_like(distances, dtype=bool)
-        mask[rows, cols] = False  
-        neighborDistances = distances[mask].reshape(distances.shape[0], distances.shape[1] - 1)
-        if neighborDistances.shape[1] == 1:
-            b = neighborDistances
-        else:
-            b = np.min(neighborDistances, axis=1)
-        # Compute silhouette
-        s = (b - a) / np.maximum(b, a)
-        silhouette_list.append(np.mean(s))
 
-        ###############
-        ## Conflict ends here
-        ###############
+        ###################
+        ### PLACEHOLDER
+        # silhouette_list.append(0)
+        ####################
+
+
+        s_cluster_list = []
+
+        for inlier in actualInliers:
+            # compute all vertical distances from a point to every plane
+            distances = np.zeros(len(planes))
+            for plane_idx in range(len(planes)):
+                distances[plane_idx] = abs(inlier[2] - planes[plane_idx].predict([inlier[0:2]])[0])
+
+            a = distances[label]
+
+            # and the next closest as the neighbor distance (b_i)        
+            mask = np.ones_like(distances, dtype=bool)
+            mask[label] = False  
+            neighborDistances = distances[mask]
+            if len(neighborDistances) == 1:
+                b = neighborDistances
+            else:
+                b = np.min(neighborDistances)
+            # Compute silhouette
+            individual_s = (b - a) / np.maximum(b, a)
+            s_cluster_list.append(individual_s)
+
+        silhouette_list.append(np.mean(s_cluster_list))
+        
+        
+        # ###############
+        # ## Conflict: this is expensive as fuck
+        # ###############
+
+        # # compute all vertical distances from every point to every plane
+        # distances = np.zeros((actualInliers.shape[0], len(planes)))
+        # for plane_idx in range(len(planes)):
+        #     distances[:, plane_idx] = abs(actualInliers[:,2] - planes[plane_idx].predict(actualInliers[:,0:2]))
+        # # keep the one referring to their labels as their actual distance (a_i), 
+        # a = distances[np.arange(distances.shape[0]), label]
+        
+        # # and the next closest as the neighbor distance (b_i)
+        # rows = np.arange(distances.shape[0])
+        # cols = label            
+        # mask = np.ones_like(distances, dtype=bool)
+        # mask[rows, cols] = False  
+        # neighborDistances = distances[mask].reshape(distances.shape[0], distances.shape[1] - 1)
+        # if neighborDistances.shape[1] == 1:
+        #     b = neighborDistances
+        # else:
+        #     b = np.min(neighborDistances, axis=1)
+        # # Compute silhouette
+        # s = (b - a) / np.maximum(b, a)
+        # silhouette_list.append(np.mean(s))
+
+        # ###############
+        # ## Conflict ends here
+        # ###############
 
     return silhouette_list
 
@@ -262,9 +295,13 @@ def generatePolygons(parcelsFolder):
                     vorClipped.at[i, 'geometry'] = vorClipped.geometry.iloc[i].difference(subsequent_geometries)
 
             vorClipped = vorClipped[vorClipped.geometry != None].reset_index(drop=True)
+            vorClipped = vorClipped[vorClipped.geometry.area > 0].reset_index(drop=True)
             # Calculate silhouette here 
             silhouette_list = __getSilhouette(vorClipped, lasDF.xyz)
-            vorClipped["silhouette"] = silhouette_list
+            try:
+                vorClipped["silhouette"] = silhouette_list
+            except Exception as e:
+                print(parcel, construction, e)
             vorClipped = vorClipped.drop(columns="plane")
             # Export
             vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")      
