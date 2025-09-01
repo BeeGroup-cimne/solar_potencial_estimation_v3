@@ -9,14 +9,13 @@ import matplotlib.pyplot as plt
 def building_clip(lidarFolder, parcelsFolder, buffer=0, filterConstructions=True):
     for parcel in tqdm.tqdm(os.listdir(parcelsFolder), desc="Clipping parcels"):
         subFolder = parcelsFolder + "/" + parcel + "/"
-
         # Find necessary LiDAR file(s)
         if(buffer == 0):
             lidarRequirements = subFolder + "necessaryLiDAR.txt"
-            exportLasPath = subFolder + "/" + parcel + ".las"
+            exportLasPath = subFolder + "/" + parcel + ".laz"
         else:
             lidarRequirements = subFolder + "necessaryLiDAR_" + str(buffer)+ "m.txt"
-            exportLasPath = subFolder + "/" + parcel + "_" + str(buffer)+ "m.las"
+            exportLasPath = subFolder + "/" + parcel + "_" + str(buffer)+ "m.laz"
 
         with open(lidarRequirements, "r") as file:
             lidarList = [line.strip() for line in file if line.strip()]
@@ -28,7 +27,7 @@ def building_clip(lidarFolder, parcelsFolder, buffer=0, filterConstructions=True
 
         # Load necessary LiDAR files and clip (merge if needed)
         clippedlasDFs = []
-        for filePath in tqdm.tqdm(lidarList, desc="Merging laz files", leave=False):
+        for filePath in tqdm.tqdm(lidarList, desc="Loading laz files", leave=False):
             fullFilePath = lidarFolder + "/" + filePath
             lasDF = laspy.read(fullFilePath)
         
@@ -47,20 +46,37 @@ def building_clip(lidarFolder, parcelsFolder, buffer=0, filterConstructions=True
             
             clippedlasDFs.append(clipped_las)
 
-        merged_las = clippedlasDFs[0]
-        for las in clippedlasDFs[1:]:
-            for dimension in merged_las.point_format.dimension_names:
-                merged_data = np.concatenate([
-                    getattr(merged_las, dimension),
-                    getattr(las, dimension)
-                ])
-                setattr(merged_las, dimension, merged_data)
+        # FOR DEBUGGING PURPOSES ONLY # Export each individually - This works
+        # for i in range(len(clippedlasDFs)):
+        #     selectedLAS = clippedlasDFs[i]
+        #     exportLasPath = subFolder + "/" + parcel + "_" + str(buffer)+ "m_" + str(i) + ".laz"
+        #     selectedLAS.write(exportLasPath)
+        
+        for i in range(len(clippedlasDFs)):
+            lasDF = clippedlasDFs[i]
+            if i == 0:
+                las_merged = laspy.LasData(lasDF.header)
+                las_merged.points = lasDF.points.copy()
+                las_merged.write(exportLasPath)
+            else:
+                with laspy.open(exportLasPath, mode = 'a') as dst:
+                    dst.append_points(lasDF.points)
 
-        # Export clipped (to be used later with constructions)
-        merged_las.write(exportLasPath)
+        # merged_las = clippedlasDFs[0]
+        # for las in clippedlasDFs[1:]:
+        #     for dimension in merged_las.point_format.dimension_names:
+        #         merged_data = np.concatenate([
+        #             getattr(merged_las, dimension),
+        #             getattr(las, dimension)
+        #         ])
+        #         setattr(merged_las, dimension, merged_data)
+
+        # # Export clipped (to be used later with constructions)
+        # merged_las.write(exportLasPath)
 
         # Now with constructions
         if(filterConstructions):
+            clipped_las = laspy.read(exportLasPath)
             for construction in tqdm.tqdm([x for x in os.listdir(subFolder) if os.path.isdir(subFolder + x)], desc="Clipping constructions", leave=False):
                 # Load gpkg
                 constructionFolder = subFolder + "/" + construction + "/"
@@ -79,5 +95,5 @@ def building_clip(lidarFolder, parcelsFolder, buffer=0, filterConstructions=True
                 clipped_las_construction = laspy.LasData(clipped_las.header)
                 clipped_las_construction.points = clipped_points_construction
                 # Export clipped 
-                exportLasPath = constructionFolder + "/Map files/" + construction + ".las"
+                exportLasPath = constructionFolder + "/Map files/" + construction + ".laz"
                 clipped_las_construction.write(exportLasPath)
