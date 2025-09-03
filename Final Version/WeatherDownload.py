@@ -7,13 +7,21 @@ import io
 import os
 from utils import create_output_folder
 
+from shapely.ops import transform
+from pyproj import Transformer
+
+
 def getLatLon(cadasterPath):
     cadasterGDF = gpd.read_file(cadasterPath)
     projected_gdf = cadasterGDF.to_crs(cadasterGDF.estimate_utm_crs())
     centroids_proj = projected_gdf.geometry.centroid
 
-    avg_centroid_proj = centroids_proj.unary_union.centroid
-    avg_centroid_geo = gpd.GeoSeries([avg_centroid_proj], crs=projected_gdf.crs).to_crs(epsg=4326).geometry[0]
+    avg_centroid_proj = centroids_proj.union_all().centroid
+    # avg_centroid_geo = gpd.GeoSeries([avg_centroid_proj], crs=projected_gdf.crs).to_crs(epsg=4326).geometry[0]
+    transformer = Transformer.from_crs(projected_gdf.crs, "EPSG:4326", always_xy=True)
+
+    # Apply directly on the point
+    avg_centroid_geo = transform(transformer.transform, avg_centroid_proj)
 
     return avg_centroid_geo.y, avg_centroid_geo.x
 

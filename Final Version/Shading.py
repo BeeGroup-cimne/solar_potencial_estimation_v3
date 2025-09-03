@@ -11,6 +11,7 @@ import shutil
 from tqdm import tqdm
 from collections import defaultdict
 import contextlib
+import traceback
 
 from utils import create_output_folder
 
@@ -29,7 +30,7 @@ def __getGrid(selectedCoords):
 
     return X, Y, Z
 
-def __sample_points(clusterPoints, cellSize = 0.75):
+def __sample_points_DEPRECTAED(clusterPoints, cellSize):
     grid = defaultdict(list)
 
     # Round points to the nearest integer for x and y
@@ -47,22 +48,49 @@ def __sample_points(clusterPoints, cellSize = 0.75):
 
     return reduced_array
 
+def __floor_to_multiple(x, n):
+    return math.floor(x / n) * n
+
+def __sample_points(plane, cellSize):
+    poly = plane.geometry.values[0]
+    centroid = poly.centroid
+    minx, miny, maxx, maxy = poly.bounds
+    minx, miny = __floor_to_multiple(minx, cellSize), __floor_to_multiple(miny, cellSize)
+    # generate grid coordinates
+    x_coords = np.arange(minx, maxx+cellSize, cellSize)
+    y_coords = np.arange(miny, maxy+cellSize, cellSize)
+
+    points_inside = []  # start list with centroid
+    for x in x_coords:
+        for y in y_coords:
+            p = Point(x, y)
+            if p.within(poly):  # avoid duplicating centroid
+                points_inside.append([p.x, p.y])
+
+    points_inside.append([centroid.x, centroid.y])
+    points_inside = np.array(points_inside)
+
+    A, B, D = plane.A.values[0], plane.B.values[0], plane.D.values[0]
+    z_vector = points_inside[:,0]*A + points_inside[:,1]*B + D
+    merged = np.column_stack((points_inside, z_vector))
+    return merged
+
 def __get_shading_profile(point, X, Y, Z):
     Z_point = point[2]+0.05
     
     azimuthAngle = np.zeros(X.shape)
     azimuthAngle = np.arctan2(X[:,:] - point[0], Y[:,:] - point[1])*180/math.pi
     azimuthAngle = np.where(azimuthAngle < 0, azimuthAngle + 360, azimuthAngle)
-    azimuthAngle = np.round(azimuthAngle).astype(int)
+    azimuthAngle = np.floor(azimuthAngle).astype(int)
 
     tiltangle = np.zeros(X.shape)
     # # This can be further optimized by applying a mask on the azimuth, but that means that the angles need to be handled in case there is a missing orientation
-    # mask = (azimuthAngle >= 60) & (azimuthAngle <= 300) & (Z >= Z_point)
-    # distance = np.sqrt((X[mask] - point[0])**2 + (Y[mask] - point[1])**2)
-    # tiltangle[mask] = np.arctan2((Z[mask] - Z_point), distance) * 180 / math.pi
+    mask = (azimuthAngle >= 60) & (azimuthAngle <= 300) & (Z >= Z_point)
+    distance = np.sqrt((X[mask] - point[0])**2 + (Y[mask] - point[1])**2)
+    tiltangle[mask] = np.arctan2((Z[mask] - Z_point), distance) * 180 / math.pi
 
-    distance = np.sqrt((X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2)
-    tiltangle = np.arctan2((Z[:,:] - Z_point), distance[:,:])*180/math.pi
+    # distance = np.sqrt((X[:,:] - point[0])**2 + (Y[:,:] - point[1])**2)
+    # tiltangle = np.arctan2((Z[:,:] - Z_point), distance[:,:])*180/math.pi
     tiltangle = np.maximum(tiltangle, 0)
 
     azimuthAngle_flat = azimuthAngle.ravel()
@@ -73,11 +101,16 @@ def __get_shading_profile(point, X, Y, Z):
     })
 
     max_tilt_df = df.groupby('azimuth')['tiltangle'].max().reset_index()
-    max_tilt_df["tiltangle"] = max_tilt_df["tiltangle"].round()
-    return max_tilt_df.tiltangle.values
 
-def computeShading(parcelsFolder, buffer=50):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    full_azimuth = pd.DataFrame({'azimuth': range(360)})
+    df_complete = full_azimuth.merge(max_tilt_df, on='azimuth', how='left')
+    df_complete['tiltangle'] = df_complete['tiltangle'].fillna(0)
+
+    df_complete["tiltangle"] = df_complete["tiltangle"].round()
+    return df_complete.tiltangle.values
+
+def computeShading(parcelsFolder, buffer=50, cellSize=0.75):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Shading: Looping through parcels"):
         parcelSubfolder = parcelsFolder + parcel + "/"
         # Load parcel
         lazPath = parcelSubfolder + parcel + "_" + str(buffer) + "m.laz"
@@ -85,7 +118,7 @@ def computeShading(parcelsFolder, buffer=50):
         lasCoords = lasDF.xyz
 
         X, Y, Z = __getGrid(lasCoords)
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=True):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Shading: Working on constructions", leave=False):
             try:
                 constructionFolder = parcelSubfolder + construction
                 constructionFile = constructionFolder + "/Plane Identification/"+ construction+".gpkg"
@@ -98,13 +131,14 @@ def computeShading(parcelsFolder, buffer=50):
                 
                 for cluster in tqdm(planesGDF.cluster.values, desc="Doing all clusters", leave=False):
                     geometry = planesGDF[planesGDF.cluster == cluster].geometry.values
+                    plane = planesGDF[planesGDF.cluster == cluster]
                     area = geometry.area
 
                     clusterPoints = lasDF[lasDF.classification == cluster]
                     clusterPoints = clusterPoints.xyz
-                    selectedPoints = __sample_points(clusterPoints, cellSize=1)    
-                    shapely_points = [Point(p[:2]) for p in selectedPoints]
-                    inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
+                    inside_points = __sample_points(plane, cellSize=cellSize)    
+                    # shapely_points = [Point(p[:2]) for p in selectedPoints]
+                    # inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
 
                     shading_results = []
                     for idx, point in enumerate(tqdm(inside_points, desc="Processing points", leave=False)):
@@ -114,4 +148,4 @@ def computeShading(parcelsFolder, buffer=50):
                     exportFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
                     np.savetxt(exportFile, combined_array, delimiter=",", fmt="%.2f")
             except Exception as e:
-                print(" ", parcel, construction, " ", e)
+                print(" ", parcel, construction, " ", e, traceback.format_exc())

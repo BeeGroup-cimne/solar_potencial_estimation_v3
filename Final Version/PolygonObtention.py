@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 from shapely import unary_union, GeometryCollection, Polygon, MultiPolygon, make_valid, intersection, Point
 from scipy.spatial import Voronoi
 import math
+import traceback
 import warnings
 warnings.filterwarnings("error")
 
@@ -121,11 +122,17 @@ def __getTiltAzimuth(normal):
 def __getSilhouette(voronoiGDF, points):
     silhouette_list = []
     labels = np.full(points.shape[0], -1)
-    # Assign each point to their label (-1 if they are at no plane)
+    # Assign each point to their label (-1 if they are at no plane) and check if there are points with noa assignations
     s = gpd.GeoSeries(map(Point, zip(points[:,0], points[:,1])))
+
+    to_drop = [] # Delete empty polygons
     for i in range(len(voronoiGDF)):
         inside = s.within(voronoiGDF.geometry[i])
         labels[inside] = i
+        if(len(labels[inside]) == 0):
+            to_drop.append(voronoiGDF.index[i])
+    voronoiGDF = voronoiGDF.drop(index=to_drop).reset_index(drop=True)
+
     # Create outlierPlane
     mask = (labels == -1)
     unassigned = points[mask]
@@ -160,7 +167,9 @@ def __getSilhouette(voronoiGDF, points):
             mask = np.ones_like(distances, dtype=bool)
             mask[label] = False  
             neighborDistances = distances[mask]
-            if len(neighborDistances) == 1:
+            if len(neighborDistances) == 0:
+                b = np.nan
+            elif len(neighborDistances) == 1:
                 b = neighborDistances
             else:
                 b = np.min(neighborDistances)
@@ -200,7 +209,7 @@ def __getSilhouette(voronoiGDF, points):
         # ## Conflict ends here
         # ###############
 
-    return silhouette_list
+    return voronoiGDF, silhouette_list
 
 def __delete_polygons_by_area(geometry, threshold):
     if isinstance(geometry, Polygon):
@@ -238,9 +247,9 @@ def __clean_holes(geometry, threshold):
     return geometry  # For non-polygon geometries, return as-is
 
 def generatePolygons(parcelsFolder):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Polygons: Looping through parcels"):
         parcelSubfolder = parcelsFolder + parcel + "/"
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Polygons: Working on constructions", leave=False):
             # Read files
             constructionFolder = parcelSubfolder + construction
             resultsFolder = constructionFolder + "/Plane Identification/"
@@ -280,11 +289,12 @@ def generatePolygons(parcelsFolder):
             vorClipped["tilt"] = tilt_list
             vorClipped["azimuth"] = azimuth_list
             vorClipped["plane"] = planes
+
+            vorClipped = gpd.clip(vorClipped, cadasterGDF)
             # Filter/Clean geometry
             vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: __delete_polygons_by_area(geom, 1))
             vorClipped["geometry"] = vorClipped["geometry"].apply(lambda geom: __clean_holes(geom, 0.25))
 
-            vorClipped = gpd.clip(vorClipped, cadasterGDF)
             vorClipped = vorClipped[~vorClipped["geometry"].apply(lambda geom: isinstance(geom, GeometryCollection))]
             vorClipped = vorClipped.reset_index(drop=True)
 
@@ -295,13 +305,17 @@ def generatePolygons(parcelsFolder):
                     vorClipped.at[i, 'geometry'] = vorClipped.geometry.iloc[i].difference(subsequent_geometries)
 
             vorClipped = vorClipped[vorClipped.geometry != None].reset_index(drop=True)
-            vorClipped = vorClipped[vorClipped.geometry.area > 0].reset_index(drop=True)
+            vorClipped = vorClipped[vorClipped["cluster"].notna()].reset_index(drop=True)
+            vorClipped = vorClipped[~vorClipped["geometry"].is_empty].reset_index(drop=True)
+            # vorClipped = vorClipped[vorClipped.geometry.area > 0].reset_index(drop=True)
+
             # Calculate silhouette here 
-            silhouette_list = __getSilhouette(vorClipped, lasDF.xyz)
             try:
+                vorClipped, silhouette_list = __getSilhouette(vorClipped, lasDF.xyz)
                 vorClipped["silhouette"] = silhouette_list
             except Exception as e:
-                print(parcel, construction, e)
+                print(" ", parcel, construction, " ", e, traceback.format_exc())
+                print(vorClipped)
             vorClipped = vorClipped.drop(columns="plane")
             # Export
             vorClipped.to_file(constructionFolder + "/Plane Identification/"+construction+".gpkg", driver="GPKG")      

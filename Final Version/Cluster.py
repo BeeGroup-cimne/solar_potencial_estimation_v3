@@ -10,9 +10,9 @@ import traceback
 import matplotlib.pyplot as plt
 
 def assign_clusters(parcelsFolder, pipeline):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Looping through parcels"):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Clustering: Looping through parcels"):
         parcelSubfolder = parcelsFolder + parcel + "/"
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Working on constructions", leave=False):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Clustering: Working on constructions", leave=False):
             constructionFolder = parcelSubfolder + construction
             create_output_folder(constructionFolder + "/Plane Identification/", deleteFolder=True)
             

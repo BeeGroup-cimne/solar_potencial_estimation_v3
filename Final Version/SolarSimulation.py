@@ -115,9 +115,9 @@ def __runPySAMSimulation(pysam_files, tilts, plane, tmyfile):
 
 
 def simulatePySAM(parcelsFolder, tmyfile, pysam_files):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="pySAM: Parcels", leave=True):
         parcelSubfolder = parcelsFolder + parcel + "/"
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="pySAM: Constructions", leave=False):
             try:
                 constructionFolder = parcelSubfolder + construction + "/"
                 solarFolder = constructionFolder  + "Solar Estimation PySAM Yearly/"
@@ -158,9 +158,9 @@ def simulatePySAM(parcelsFolder, tmyfile, pysam_files):
                 print(parcel, construction, e)
 
 def panelYearly(parcelsFolder):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="yearlyPanels: Parcels", leave=True):
         parcelSubfolder = parcelsFolder + parcel + "/"
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="yearlyPanels:Constructions", leave=False):
             try:
                 constructionFolder = parcelSubfolder + construction + "/"
                 solarFolder = constructionFolder + "Solar Estimation Panels Simulated/"

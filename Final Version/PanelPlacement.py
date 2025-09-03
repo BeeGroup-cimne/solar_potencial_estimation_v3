@@ -66,11 +66,11 @@ def __rect(polygon, tilt=0, size=[panelWidth, panelHeight], tol=0, clip=True, in
     return grid, count
 
 def placePanels(parcelsFolder):  
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Parcels", leave=True):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Panels: Parcels", leave=True):
 
         parcelSubfolder = parcelsFolder + parcel + "/"
         # if(parcel == "4649601DF3844H"):
-        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Constructions", leave=False):
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Panels: Constructions", leave=False):
             # if(construction == "546"):
             try:
                 constructionFolder = parcelSubfolder + construction + "/"
