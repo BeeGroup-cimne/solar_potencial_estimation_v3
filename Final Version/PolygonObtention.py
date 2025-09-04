@@ -247,7 +247,7 @@ def __clean_holes(geometry, threshold):
     return geometry  # For non-polygon geometries, return as-is
 
 def generatePolygons(parcelsFolder):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Polygons: Looping through parcels"):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Polygons: Looping through parcels", leave=False):
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Polygons: Working on constructions", leave=False):
             # Read files

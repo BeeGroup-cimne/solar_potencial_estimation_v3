@@ -10,7 +10,7 @@ import traceback
 import matplotlib.pyplot as plt
 
 def assign_clusters(parcelsFolder, pipeline):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Clustering: Looping through parcels"):
+    for parcel in tqdm(os.listdir(parcelsFolder), desc="Clustering: Looping through parcels", leave=False):
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="Clustering: Working on constructions", leave=False):
             constructionFolder = parcelSubfolder + construction
@@ -277,12 +277,13 @@ class kPlanes():
                         finalPlanes = planes
                 
                 ### COMPUTE SCORE #####################################################################
-                score = ClusterMetrics.planarSilhouette(X, labels)
+                score = len(labels[labels != -1])
                 if(score > best_score_n):
                     best_score_n = score
                     best_labels_n = lastLabels
                     best_planes_n = finalPlanes
             ### COMPARE SCORES AND KEEP BEST #####################################################################
+            best_score_n = ClusterMetrics.planarSilhouette(X, best_labels_n)
             scores_.append(best_score_n)
             if(best_score_n > best_score):
                 best_score = best_score_n
