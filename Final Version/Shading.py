@@ -15,8 +15,7 @@ import traceback
 
 from utils import create_output_folder
 
-def __getGrid(selectedCoords):
-    spacing = 1
+def __getGrid(selectedCoords, spacing = 0.3):
     region = pygmt.info(data=selectedCoords, spacing=spacing)
     df_trimmed = pygmt.blockmedian(data=selectedCoords, T=0.5, spacing = spacing, region = region)
     df_trimmed = df_trimmed.rename(columns={0:"x",1:"y",2:"z"})
@@ -110,7 +109,7 @@ def __get_shading_profile(point, X, Y, Z):
     return df_complete.tiltangle.values
 
 def computeShading(parcelsFolder, buffer=50, cellSize=0.75):
-    for parcel in tqdm(os.listdir(parcelsFolder), desc="Shading: Looping through parcels"):
+    for parcel in tqdm([x for x in os.listdir(parcelsFolder) if os.path.isdir(parcelsFolder + x)], desc="Shading: Looping through parcels"):
         parcelSubfolder = parcelsFolder + parcel + "/"
         # Load parcel
         lazPath = parcelSubfolder + parcel + "_" + str(buffer) + "m.laz"
@@ -129,7 +128,7 @@ def computeShading(parcelsFolder, buffer=50, cellSize=0.75):
                 
                 create_output_folder(constructionFolder + "/Shading/", deleteFolder=True)
                 
-                for cluster in tqdm(planesGDF.cluster.values, desc="Doing all clusters", leave=False):
+                for cluster in tqdm(planesGDF.cluster.values, desc="Shading: Doing all clusters", leave=False):
                     geometry = planesGDF[planesGDF.cluster == cluster].geometry.values
                     plane = planesGDF[planesGDF.cluster == cluster]
                     area = geometry.area
@@ -141,7 +140,7 @@ def computeShading(parcelsFolder, buffer=50, cellSize=0.75):
                     # inside_points = [point for point, shapely_point in zip(selectedPoints, shapely_points) if geometry.contains(shapely_point)]            
 
                     shading_results = []
-                    for idx, point in enumerate(tqdm(inside_points, desc="Processing points", leave=False)):
+                    for idx, point in enumerate(tqdm(inside_points, desc="Shading: Processing points", leave=False)):
                         shading_results.append(__get_shading_profile(point, X, Y, Z))
 
                     combined_array = np.hstack((inside_points, shading_results))

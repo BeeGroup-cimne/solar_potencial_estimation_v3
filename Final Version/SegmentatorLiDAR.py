@@ -54,13 +54,14 @@ def building_clip(lidarFolder, parcelsFolder, buffer=0, filterConstructions=True
         
         for i in range(len(clippedlasDFs)):
             lasDF = clippedlasDFs[i]
-            if i == 0:
-                las_merged = laspy.LasData(lasDF.header)
-                las_merged.points = lasDF.points.copy()
-                las_merged.write(exportLasPath)
-            else:
-                with laspy.open(exportLasPath, mode = 'a') as dst:
-                    dst.append_points(lasDF.points)
+            if(len(lasDF) > 0):
+                if not os.path.isfile(exportLasPath):
+                    las_merged = laspy.LasData(lasDF.header)
+                    las_merged.points = lasDF.points.copy()
+                    las_merged.write(exportLasPath)
+                else:
+                    with laspy.open(exportLasPath, mode = 'a') as dst:
+                        dst.append_points(lasDF.points)
 
         # merged_las = clippedlasDFs[0]
         # for las in clippedlasDFs[1:]:

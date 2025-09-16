@@ -104,13 +104,16 @@ def download_and_extract_csv(url, output_dir):
         csv_basename = os.path.basename(csv_file)
         with zip_ref.open(csv_file) as source, open(os.path.join(output_dir, csv_basename), 'wb') as target:
             target.write(source.read())
+
+    return csv_basename
     
 def downloadTMY(cadasterPath, outputFolder):
     create_output_folder(outputFolder)
 
     lat, lon = getLatLon(cadasterPath)
     url = requestTMY(lat, lon)
-    download_and_extract_csv(url, outputFolder)
+    tmyFile = download_and_extract_csv(url, outputFolder)
+    return tmyFile
 
 if __name__ == "__main__":
     pass

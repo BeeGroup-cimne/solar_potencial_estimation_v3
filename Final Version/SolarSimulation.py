@@ -84,37 +84,25 @@ def __runPySAMSimulation(pysam_files, tilts, plane, tmyfile):
     for m in modules:
         m.execute()
 
-    # AC
+    # AC (W, converted to kWh/m²)
     generation = pv.export()["Outputs"]["ac"]
     generation = np.array(generation).reshape(365, 24)
     generation_df = pd.DataFrame(generation)
     generation_df = generation_df/area
-    annual_ac = generation_df.sum().sum() 
-    # POA
+    annual_ac = generation_df.sum().sum()/1000 
+    # POA (kWh/m²)
     annual_poa = sum(pv.export()["Outputs"]["poa_monthly"])
-    # DC
+    # DC (W, converted to kWh/m²)
     DCOut = np.array(pv.export()["Outputs"]["dc"])
-    annual_dc = np.sum(DCOut)/area
+    annual_dc = np.sum(DCOut)/area/1000
 
     return {"AC_Yearly": annual_ac,
             "POA_Yearly": annual_poa,
             "DC_Yearly": annual_dc}
 
-    # elif(returnType=="DC"):
-    #     days = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    #     cumulative_sum = list(accumulate(days))
-    #     DCOut = np.array(pv.export()["Outputs"]["dc"]).reshape(365, 24)/area
-    #     averages = np.zeros((12,24))
-    #     for month in range(12):
-    #         for hour in range(24):
-    #             averages[month,hour] = np.average(DCOut[cumulative_sum[month]:cumulative_sum[month+1],hour])
-    #     averages = averages.reshape(12*24)
-    #     averages = ','.join(map("{:.6f}".format, annual))
-    #     return averages
 
 
-
-def simulatePySAM(parcelsFolder, tmyfile, pysam_files):
+def simulatePySAM_Grid(parcelsFolder, tmyfile, pysam_files):
     for parcel in tqdm(os.listdir(parcelsFolder), desc="pySAM: Parcels", leave=True):
         parcelSubfolder = parcelsFolder + parcel + "/"
         for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="pySAM: Constructions", leave=False):
@@ -172,7 +160,7 @@ def panelYearly(parcelsFolder):
                 for file in os.listdir(sunPath):
                     allSunDC = pd.concat([allSunDC, pd.read_csv(sunPath + file)], ignore_index=True)
 
-                allSunDC["annual"] = allSunDC["DC_yearly"]/1000*(1.879*1.045)
+                allSunDC["annual"] = allSunDC["DC_yearly"]*(1.879*1.045)
 
                 panelsGDFs = []
                 panelsPath = parcelsFolder + parcel + "/" + construction + "/Solar Estimation Panels/"
@@ -197,3 +185,58 @@ def panelYearly(parcelsFolder):
                 combined_gdf.to_file(solarFolder + construction + ".gpkg")
             except:
                 print(" ", parcel, construction, " ")
+
+def panelSimulate(parcelsFolder, tmyfile, pysam_files, shade=True):
+    for parcel in tqdm([x for x in os.listdir(parcelsFolder) if os.path.isdir(parcelsFolder + x)], desc="yearlyPanels: Parcels", leave=True):
+        parcelSubfolder = parcelsFolder + parcel + "/"
+        for construction in tqdm([x for x in os.listdir(parcelSubfolder) if os.path.isdir(parcelSubfolder + x)],  desc="yearlyPanels:Constructions", leave=False):
+            # print(parcel, construction)
+            constructionFolder = parcelSubfolder + construction + "/"
+            planesGDF = gpd.read_file(constructionFolder + "Plane Identification/" + construction + ".gpkg")
+                   
+            panelsPath = parcelsFolder + parcel + "/" + construction + "/Solar Estimation Panels/"
+            panelsGDF_list = []
+            
+            for cluster in tqdm(planesGDF.cluster.values, desc="yearlyPanels: Clusters", leave=False):
+                shadingFile = constructionFolder + "/Shading/" + str(cluster) + ".csv"
+                plane = planesGDF[planesGDF.cluster == cluster]
+                point_list = []
+                
+
+                if os.path.isfile(shadingFile):
+                    if(os.stat(shadingFile).st_size > 0):
+                        shadingProfilesDF = pd.read_csv(shadingFile, header=None)
+                        panelsGDF = gpd.read_file(panelsPath + str(cluster) + ".gpkg")
+                
+                        ac_annual_list = []
+                        dc_annual_list = []
+                        poa_annual_list = []
+                        
+                        for panelID in tqdm(range(len(panelsGDF), desc="yearlyPanels: Panels inside cluster", leave=False)):
+                            panel = panelsGDF.iloc[panelID].geometry
+
+                            shadingProfilesDF["inside_panel"] = shadingProfilesDF.apply(lambda row: panel.contains(Point(row[0], row[1])), axis=1)
+                            if(len(shadingProfilesDF[shadingProfilesDF["inside_panel"]]) == 0):
+                                print("No shading in", parcel, construction)
+                            # Filter points inside the panel and calculate the average annual
+                            averagedShading = shadingProfilesDF[shadingProfilesDF["inside_panel"]].mean(numeric_only=True)
+                            coords = averagedShading[0:3].values
+                            tilts = averagedShading[3:363].values
+                            if(not shade):
+                                tilts = np.zeros_like(tilts)
+
+                            annual = __runPySAMSimulation(pysam_files, tilts, plane, tmyfile)
+
+                            ac_annual_list.append(annual["AC_Yearly"]*(1.879*1.045))
+                            dc_annual_list.append(annual["DC_Yearly"]*(1.879*1.045))
+                            poa_annual_list.append(annual["POA_Yearly"]*(1.879*1.045))
+
+                        panelsGDF["AC_Yearly"] = ac_annual_list
+                        panelsGDF["DC_Yearly"] = dc_annual_list
+                        panelsGDF["POA_Yearly"] = poa_annual_list
+                        panelsGDF_list.append(panelsGDF)
+
+            solarFolder = constructionFolder + "Solar Estimation Panels Simulated/"        
+            create_output_folder(solarFolder, deleteFolder=True)
+            combined_gdf = gpd.GeoDataFrame(pd.concat(panelsGDF_list, ignore_index=True))
+            combined_gdf.to_file(solarFolder + construction + ".gpkg")
