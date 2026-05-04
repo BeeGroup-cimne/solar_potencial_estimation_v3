@@ -11,7 +11,6 @@ library(RColorBrewer)
 
 base_folder <- "/home/jaumeasensio/Documents/Projectes/BEEGroup/solar_potencial_estimation_v3/Results/"
 neighborhoods <- c("Test_70_el Besòs i el Maresme")
-neighborhoods <- c("70_el Besòs i el Maresme")
 
 re_sf_list <- list()
 
